@@ -1,0 +1,26 @@
+.card-libro {
+    height: 100%;
+}
+
+.card-libro .card-img-top {
+    height: 260px;
+    object-fit: cover;
+}
+
+.card-libro .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.card-libro .card-text {
+    font-size: 0.85rem;
+    color: #555;
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.editorial-badge {
+    font-size: 0.75rem;
+}

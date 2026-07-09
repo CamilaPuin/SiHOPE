@@ -1,0 +1,48 @@
+/* Estilos propios del frontend React (complementan sihope.css, que se mantiene
+   idéntico al del backend). */
+
+/* Spinner de carga */
+.spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid rgba(0, 0, 0, 0.18);
+    border-top-color: var(--negro);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+}
+.spinner--light {
+    border-color: rgba(255, 255, 255, 0.35);
+    border-top-color: var(--blanco);
+}
+.spinner--lg {
+    width: 34px;
+    height: 34px;
+    border-width: 3.5px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Pantalla de carga a página completa (sesión inicial) */
+.page-loader {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    color: var(--gris-texto);
+}
+
+/* Botón deshabilitado mientras se procesa una petición */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}

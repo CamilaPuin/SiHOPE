@@ -1,13 +1,13 @@
-package edu.uptc.swi.sihope;
+	package edu.uptc.swii.sihope;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SihopeApplication {
+public class LibraryappApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(SihopeApplication.class, args);
+		SpringApplication.run(LibraryappApplication.class, args);
 	}
 
 }
