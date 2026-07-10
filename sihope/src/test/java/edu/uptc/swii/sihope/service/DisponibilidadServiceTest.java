@@ -1,5 +1,6 @@
 package edu.uptc.swii.sihope.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -8,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,8 +19,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import edu.uptc.swii.sihope.domain.Disponibilidad;
 import edu.uptc.swii.sihope.domain.User;
 import edu.uptc.swii.sihope.dto.BloqueHorario;
+import edu.uptc.swii.sihope.dto.response.MonitorDirectorioResponse;
 import edu.uptc.swii.sihope.repository.DisponibilidadRepository;
 import edu.uptc.swii.sihope.repository.UserRepository;
 
@@ -86,5 +90,27 @@ class DisponibilidadServiceTest {
         when(userRepository.findById(anyInt())).thenReturn(Optional.empty());
         List<String> errores = service.reemplazar(99, List.of(new BloqueHorario(1, "10:00", "12:00")));
         assertFalse(errores.isEmpty());
+    }
+
+    @Test
+    void listaMonitoresConSuDisponibilidadEIniciales() {
+        User monitor = new User();
+        monitor.setId(1);
+        monitor.setNombres("Ana");
+        monitor.setApellidos("Gómez");
+        monitor.setCorreo("ana@uptc.edu.co");
+        when(userRepository.findByRole_NombreOrderByNombresAscApellidosAsc("MONITOR"))
+                .thenReturn(List.of(monitor));
+        when(disponibilidadRepository.findByMonitorIdOrderByDiaSemanaAscHoraInicioAsc(1))
+                .thenReturn(List.of(new Disponibilidad(monitor, 1, LocalTime.of(10, 0), LocalTime.of(12, 0))));
+
+        List<MonitorDirectorioResponse> monitores = service.listarMonitores();
+
+        assertEquals(1, monitores.size());
+        MonitorDirectorioResponse dto = monitores.get(0);
+        assertEquals("Ana Gómez", dto.nombre());
+        assertEquals("AG", dto.iniciales());
+        assertEquals(1, dto.disponibilidad().size());
+        assertEquals("10:00", dto.disponibilidad().get(0).horaInicio());
     }
 }

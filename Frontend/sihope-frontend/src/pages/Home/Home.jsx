@@ -1,12 +1,42 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import Alert from "../../components/common/Alert";
+import Spinner from "../../components/common/Spinner";
+import { listarAbiertas } from "../../services/convocatoriaService";
+import { listarMonitores } from "../../services/disponibilidadService";
 
 /**
- * Panel principal del estudiante. Contenido de ejemplo (aún no hay endpoints
- * para citas/convocatorias); el saludo usa el usuario en sesión.
+ * Panel principal del estudiante. Resume datos reales: convocatorias abiertas
+ * (HU_005) y monitores disponibles (HU_006, lado de lectura).
  */
 export default function Home() {
     const { usuario } = useAuth();
+    const [convocatorias, setConvocatorias] = useState([]);
+    const [monitores, setMonitores] = useState([]);
+    const [cargando, setCargando] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        let activo = true;
+        Promise.all([listarAbiertas(), listarMonitores()])
+            .then(([conv, mon]) => {
+                if (!activo) return;
+                setConvocatorias(conv.data ?? []);
+                setMonitores(mon.data ?? []);
+            })
+            .catch((err) => {
+                if (activo) setError(err.message);
+            })
+            .finally(() => {
+                if (activo) setCargando(false);
+            });
+        return () => {
+            activo = false;
+        };
+    }, []);
+
+    const monitoresConHorario = monitores.filter((m) => (m.disponibilidad ?? []).length > 0).length;
 
     return (
         <>
@@ -18,73 +48,95 @@ export default function Home() {
                 </p>
             </div>
 
+            <Alert tipo="error">{error}</Alert>
+
             <section className="grid grid--3" style={{ marginBottom: 28 }}>
                 <div className="stat">
-                    <div className="stat__label">Próximas citas</div>
-                    <div className="stat__value">3</div>
+                    <div className="stat__label">Convocatorias abiertas</div>
+                    <div className="stat__value">{cargando ? "…" : convocatorias.length}</div>
                     <div className="stat__accent" />
                 </div>
                 <div className="stat">
                     <div className="stat__label">Monitores disponibles</div>
-                    <div className="stat__value">18</div>
+                    <div className="stat__value">{cargando ? "…" : monitoresConHorario}</div>
                     <div className="stat__accent" />
                 </div>
                 <div className="stat">
-                    <div className="stat__label">Convocatorias abiertas</div>
-                    <div className="stat__value">2</div>
+                    <div className="stat__label">Monitores registrados</div>
+                    <div className="stat__value">{cargando ? "…" : monitores.length}</div>
                     <div className="stat__accent" />
                 </div>
             </section>
 
             <section className="grid grid--2">
                 <div className="card">
-                    <div className="card__title">Próximas citas</div>
-                    <div className="card__subtitle">
-                        Tus monitorías agendadas para esta semana.
-                    </div>
-                    <div className="schedule">
-                        <div className="schedule__row">
-                            <span>
-                                <strong>Cálculo Diferencial</strong> · Ana Gómez
-                            </span>
-                            <span className="muted">Lun 10:00</span>
-                        </div>
-                        <div className="schedule__row">
-                            <span>
-                                <strong>Programación I</strong> · Carlos Ruiz
-                            </span>
-                            <span className="muted">Mié 14:00</span>
-                        </div>
-                        <div className="schedule__row">
-                            <span>
-                                <strong>Física Mecánica</strong> · Laura Díaz
-                            </span>
-                            <span className="muted">Vie 08:00</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="card">
                     <div className="card__title">Convocatorias abiertas</div>
                     <div className="card__subtitle">
                         Postúlate para ser monitor este semestre.
                     </div>
-                    <div className="schedule">
-                        <div className="schedule__row">
-                            <span>
-                                <strong>Monitor de Estructuras de Datos</strong>
-                            </span>
-                            <span className="badge badge-yellow">Cierra 20 jul</span>
+
+                    {cargando ? (
+                        <div className="text-center mt-16">
+                            <Spinner grande />
                         </div>
-                        <div className="schedule__row">
-                            <span>
-                                <strong>Monitor de Bases de Datos</strong>
-                            </span>
-                            <span className="badge badge-yellow">Cierra 28 jul</span>
+                    ) : convocatorias.length === 0 ? (
+                        <p className="muted mt-16">
+                            No hay convocatorias abiertas en este momento.
+                        </p>
+                    ) : (
+                        <div className="schedule">
+                            {convocatorias.slice(0, 4).map((c) => (
+                                <div key={c.id} className="schedule__row">
+                                    <span>
+                                        <strong>{c.titulo}</strong> · {c.materia}
+                                    </span>
+                                    <span className="badge badge-yellow">
+                                        Cierra {c.fechaLimite}
+                                    </span>
+                                </div>
+                            ))}
                         </div>
-                    </div>
+                    )}
+
                     <Link to="/convocatorias" className="btn btn-ghost btn-sm mt-16">
                         Ver convocatorias
+                    </Link>
+                </div>
+
+                <div className="card">
+                    <div className="card__title">Monitores con disponibilidad</div>
+                    <div className="card__subtitle">
+                        Monitores que ya publicaron sus horarios de atención.
+                    </div>
+
+                    {cargando ? (
+                        <div className="text-center mt-16">
+                            <Spinner grande />
+                        </div>
+                    ) : monitoresConHorario === 0 ? (
+                        <p className="muted mt-16">
+                            Todavía ningún monitor ha publicado horarios disponibles.
+                        </p>
+                    ) : (
+                        <div className="schedule">
+                            {monitores
+                                .filter((m) => (m.disponibilidad ?? []).length > 0)
+                                .slice(0, 4)
+                                .map((m) => (
+                                    <div key={m.id} className="schedule__row">
+                                        <span>
+                                            <strong>{m.nombre}</strong>
+                                        </span>
+                                        <span className="badge badge-active">
+                                            {m.disponibilidad.length} franja(s)
+                                        </span>
+                                    </div>
+                                ))}
+                        </div>
+                    )}
+
+                    <Link to="/monitores" className="btn btn-ghost btn-sm mt-16">
+                        Ver monitores
                     </Link>
                 </div>
             </section>

@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import edu.uptc.swii.sihope.domain.Disponibilidad;
 import edu.uptc.swii.sihope.domain.User;
 import edu.uptc.swii.sihope.dto.BloqueHorario;
+import edu.uptc.swii.sihope.dto.response.MonitorDirectorioResponse;
 import edu.uptc.swii.sihope.repository.DisponibilidadRepository;
 import edu.uptc.swii.sihope.repository.UserRepository;
 
@@ -32,6 +33,42 @@ public class DisponibilidadService {
                                  UserRepository userRepository) {
         this.disponibilidadRepository = disponibilidadRepository;
         this.userRepository = userRepository;
+    }
+
+    /** Rol cuyos usuarios aparecen en el directorio de monitores. */
+    private static final String ROL_MONITOR = "MONITOR";
+
+    /**
+     * Directorio de monitores con su disponibilidad (lectura de HU_006): permite que
+     * estudiantes y coordinadores vean las franjas marcadas por cada monitor.
+     */
+    public List<MonitorDirectorioResponse> listarMonitores() {
+        return userRepository.findByRole_NombreOrderByNombresAscApellidosAsc(ROL_MONITOR)
+                .stream()
+                .map(m -> new MonitorDirectorioResponse(
+                        m.getId(),
+                        nombreCompleto(m),
+                        iniciales(m),
+                        m.getCorreo(),
+                        consultar(m.getId())))
+                .toList();
+    }
+
+    private static String nombreCompleto(User u) {
+        return ((u.getNombres() == null ? "" : u.getNombres()) + " "
+                + (u.getApellidos() == null ? "" : u.getApellidos())).trim();
+    }
+
+    /** Iniciales (primera letra de nombre y apellido) para el avatar del directorio. */
+    private static String iniciales(User u) {
+        char inicialNombre = primeraLetra(u.getNombres());
+        char inicialApellido = primeraLetra(u.getApellidos());
+        String iniciales = ("" + inicialNombre + inicialApellido).trim();
+        return iniciales.isBlank() ? "?" : iniciales.toUpperCase();
+    }
+
+    private static char primeraLetra(String texto) {
+        return (texto == null || texto.isBlank()) ? ' ' : texto.trim().charAt(0);
     }
 
     /** Franjas actuales del monitor, ordenadas por día y hora. */

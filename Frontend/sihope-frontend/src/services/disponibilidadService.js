@@ -17,3 +17,7 @@ export const guardarDisponibilidad = (bloques) =>
 // GET /api/monitores/{id}/disponibilidad  ·  data: BloqueHorario[]
 export const disponibilidadDe = (monitorId) =>
     api.get(`/api/monitores/${monitorId}/disponibilidad`).then((r) => r.data);
+
+// GET /api/monitores  ·  data: MonitorDirectorioResponse[] (con disponibilidad)
+export const listarMonitores = () =>
+    api.get("/api/monitores").then((r) => r.data);
