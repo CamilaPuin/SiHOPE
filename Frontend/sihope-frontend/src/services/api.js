@@ -1,21 +1,31 @@
 import axios from "axios";
+import { obtenerToken, borrarToken } from "../utils/token";
 
 /**
  * Cliente axios centralizado para toda la aplicación.
  *
- * - `baseURL`      → URL del backend, configurable por ambiente (VITE_API_URL).
- * - `withCredentials: true` → envía y recibe la cookie de sesión (JSESSIONID),
- *   necesaria porque la autenticación del backend es por HttpSession.
+ * - `baseURL` → URL del backend, configurable por ambiente (VITE_API_URL).
+ * - Autenticación por JWT: cada petición adjunta `Authorization: Bearer <token>`
+ *   leído de localStorage (ver utils/token.js). Si el backend responde 401, el
+ *   token se descarta para forzar un nuevo inicio de sesión.
  *
  * El backend responde SIEMPRE con el envoltorio `ApiResponse`:
  *   { success: boolean, message: string, data: T }
  */
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
-    withCredentials: true,
     headers: {
         "Content-Type": "application/json"
     }
+});
+
+// Interceptor de petición: adjunta el token JWT si existe.
+api.interceptors.request.use((config) => {
+    const token = obtenerToken();
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
 });
 
 /**
@@ -38,6 +48,10 @@ api.interceptors.response.use(
     (error) => {
         const respuesta = error.response;
         if (respuesta) {
+            // Token inválido/expirado o rol revocado → descartar el token local.
+            if (respuesta.status === 401) {
+                borrarToken();
+            }
             // El backend devolvió un ApiResponse de error → reutilizamos su mensaje/data.
             const cuerpo = respuesta.data || {};
             const mensaje =

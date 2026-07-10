@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import edu.uptc.swii.sihope.dto.UsuarioSesion;
+import edu.uptc.swii.sihope.dto.UsuarioAutenticado;
 import edu.uptc.swii.sihope.dto.request.RecoverPasswordRequest;
 import edu.uptc.swii.sihope.dto.request.ResetPasswordRequest;
 import edu.uptc.swii.sihope.dto.request.UpdatePasswordRequest;
@@ -16,10 +16,12 @@ import edu.uptc.swii.sihope.dto.response.ApiResponse;
 import edu.uptc.swii.sihope.service.UserService;
 import edu.uptc.swii.sihope.service.UserService.ResultadoCambio;
 import edu.uptc.swii.sihope.service.UserService.ResultadoReset;
-import jakarta.servlet.http.HttpSession;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/credenciales")
+@Tag(name = "Credenciales", description = "Cambio, recuperación y restablecimiento de contraseña.")
 public class CredencialesController {
 
     private final UserService userService;
@@ -28,13 +30,12 @@ public class CredencialesController {
         this.userService = userService;
     }
 
-    /** Cambio de contraseña de la cuenta autenticada (identificada por la sesión). */
+    /** Cambio de contraseña de la cuenta autenticada (identificada por el token JWT). */
     @PutMapping("/password")
     public ResponseEntity<ApiResponse<Void>> cambiarPassword(@RequestBody UpdatePasswordRequest request,
-                                                             HttpSession session) {
+                                                             UsuarioAutenticado autenticado) {
 
-        UsuarioSesion sesion = (UsuarioSesion) session.getAttribute("usuarioSesion");
-        if (sesion == null) {
+        if (autenticado == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error("Debes iniciar sesión para cambiar la contraseña."));
         }
@@ -45,7 +46,7 @@ public class CredencialesController {
         }
 
         ResultadoCambio resultado = userService.cambiarPassword(
-                sesion.getCorreo(), request.getActual(), request.getNueva());
+                autenticado.correo(), request.getActual(), request.getNueva());
 
         return switch (resultado) {
             case OK -> ResponseEntity.ok(ApiResponse.ok("Contraseña actualizada correctamente."));

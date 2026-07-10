@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { AuthContext } from "./authContext";
 import * as authService from "../services/authService";
+import { obtenerToken } from "../utils/token";
 
 /**
- * Provee el estado de sesión a toda la app. Al montar intenta hidratar la
- * sesión con GET /api/auth/me (la cookie JSESSIONID viaja gracias a
- * withCredentials). Mientras resuelve, `cargando` es true para que las rutas
- * protegidas no redirijan antes de tiempo.
+ * Provee el estado de sesión a toda la app. Al montar, si hay un token JWT en
+ * localStorage, hidrata la sesión con GET /api/auth/me. Mientras resuelve,
+ * `cargando` es true para que las rutas protegidas no redirijan antes de tiempo.
  */
 export default function AuthProvider({ children }) {
     const [usuario, setUsuario] = useState(null);
@@ -14,13 +14,17 @@ export default function AuthProvider({ children }) {
 
     useEffect(() => {
         let activo = true;
+        if (!obtenerToken()) {
+            setCargando(false);
+            return;
+        }
         authService
             .me()
             .then((res) => {
                 if (activo) setUsuario(res.data ?? null);
             })
             .catch(() => {
-                // 401 (sin sesión) o error de red → no hay usuario autenticado.
+                // Token inválido/expirado o error de red → no hay usuario autenticado.
                 if (activo) setUsuario(null);
             })
             .finally(() => {
@@ -33,8 +37,9 @@ export default function AuthProvider({ children }) {
 
     const iniciarSesion = useCallback(async (credenciales) => {
         const res = await authService.login(credenciales);
-        setUsuario(res.data ?? null);
-        return res.data;
+        const usuarioSesion = res.data?.usuario ?? null;
+        setUsuario(usuarioSesion);
+        return usuarioSesion;
     }, []);
 
     const cerrarSesion = useCallback(async () => {

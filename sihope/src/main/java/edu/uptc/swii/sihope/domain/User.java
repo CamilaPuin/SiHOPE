@@ -42,6 +42,14 @@ public class User {
     @Column(name = "token_reset_expira")
     private LocalDateTime tokenResetExpira;
 
+    /**
+     * Versión del token JWT. Cada JWT emitido incluye este valor; al cambiar el
+     * rol, estado o contraseña se incrementa, invalidando de inmediato cualquier
+     * token previo (fuerza un nuevo inicio de sesión).
+     */
+    @Column(name = "token_version", nullable = false)
+    private int tokenVersion = 0;
+
     @ManyToOne
     @JoinColumn(name = "rol_id")
     private Role role;
@@ -135,6 +143,14 @@ public class User {
 
     public void setTokenResetExpira(LocalDateTime tokenResetExpira) {
         this.tokenResetExpira = tokenResetExpira;
+    }
+
+    public int getTokenVersion() {
+        return tokenVersion;
+    }
+
+    public void setTokenVersion(int tokenVersion) {
+        this.tokenVersion = tokenVersion;
     }
 
     public Role getRole() {

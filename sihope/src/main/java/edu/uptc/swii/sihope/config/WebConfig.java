@@ -1,11 +1,18 @@
 package edu.uptc.swii.sihope.config;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * Configuración web: CORS, guarda de autenticación por JWT y resolución del
+ * argumento {@code UsuarioAutenticado} en los controllers.
+ */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
@@ -13,12 +20,31 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${app.cors.allowed-origins}")
     private String[] allowedOrigins;
 
+    private final JwtAuthInterceptor jwtAuthInterceptor;
+    private final UsuarioArgumentResolver usuarioArgumentResolver;
+
+    public WebConfig(JwtAuthInterceptor jwtAuthInterceptor,
+                     UsuarioArgumentResolver usuarioArgumentResolver) {
+        this.jwtAuthInterceptor = jwtAuthInterceptor;
+        this.usuarioArgumentResolver = usuarioArgumentResolver;
+    }
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new SesionInterceptor())
+        registry.addInterceptor(jwtAuthInterceptor)
                 .addPathPatterns(
+                        "/api/auth/me",
                         "/api/admin/**",
+                        "/api/monitor/**",
+                        "/api/monitores/**",
+                        "/api/coordinador/**",
+                        "/api/convocatorias/**",
                         "/api/credenciales/password");
+    }
+
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
+        resolvers.add(usuarioArgumentResolver);
     }
 
     @Override

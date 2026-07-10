@@ -48,9 +48,9 @@ export default function Coordinador() {
                             <span className="badge badge-yellow">Cierra 28 jul</span>
                         </div>
                     </div>
-                    <a href="#" className="btn btn-primary btn-sm mt-16">
+                    <Link to="/coordinador/convocatorias" className="btn btn-primary btn-sm mt-16">
                         Gestionar convocatorias
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="card">

@@ -83,8 +83,8 @@ export default function Home() {
                             <span className="badge badge-yellow">Cierra 28 jul</span>
                         </div>
                     </div>
-                    <Link to="/monitores" className="btn btn-ghost btn-sm mt-16">
-                        Ver más
+                    <Link to="/convocatorias" className="btn btn-ghost btn-sm mt-16">
+                        Ver convocatorias
                     </Link>
                 </div>
             </section>

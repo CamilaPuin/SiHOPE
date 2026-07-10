@@ -37,6 +37,25 @@ export default function Sidebar() {
                     </NavLink>
                 )}
 
+                {/* Mi disponibilidad: solo monitor (HU_006) */}
+                {rol === "MONITOR" && (
+                    <NavLink to="/monitor/disponibilidad" className={claseLink}>
+                        <span className="nav__icon">◷</span> Mi disponibilidad
+                    </NavLink>
+                )}
+
+                {/* Convocatorias: gestión (coordinador) o postulación (estudiante) */}
+                {rol === "COORDINADOR" && (
+                    <NavLink to="/coordinador/convocatorias" className={claseLink}>
+                        <span className="nav__icon">◱</span> Convocatorias
+                    </NavLink>
+                )}
+                {rol === "ESTUDIANTE" && (
+                    <NavLink to="/convocatorias" className={claseLink}>
+                        <span className="nav__icon">◱</span> Convocatorias
+                    </NavLink>
+                )}
+
                 {/* Monitores: disponible para todos los roles */}
                 <NavLink to="/monitores" className={claseLink}>
                     <span className="nav__icon">◎</span> Monitores

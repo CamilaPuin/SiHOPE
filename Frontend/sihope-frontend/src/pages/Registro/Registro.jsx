@@ -92,6 +92,7 @@ export default function Registro() {
                     <form onSubmit={manejarSubmit} noValidate>
                         <div className="form-grid">
                             <Field
+                                className="col-2"
                                 label="Nombres"
                                 id="nombres"
                                 value={form.nombres}
@@ -100,6 +101,7 @@ export default function Registro() {
                                 error={errores.nombres}
                             />
                             <Field
+                                className="col-2"
                                 label="Apellidos"
                                 id="apellidos"
                                 value={form.apellidos}
