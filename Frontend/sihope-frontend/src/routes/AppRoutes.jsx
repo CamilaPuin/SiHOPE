@@ -17,8 +17,11 @@ import Verificar from "../pages/Verificar/Verificar";
 // Páginas internas
 import Home from "../pages/Home/Home";
 import Coordinador from "../pages/Coordinador/Coordinador";
+import CoordinadorConvocatorias from "../pages/Coordinador/CoordinadorConvocatorias";
 import Monitor from "../pages/Monitor/Monitor";
+import MonitorDisponibilidad from "../pages/Monitor/MonitorDisponibilidad";
 import Monitores from "../pages/Monitores/Monitores";
+import Convocatorias from "../pages/Convocatorias/Convocatorias";
 import Credenciales from "../pages/Credenciales/Credenciales";
 import AdminUsuarios from "../pages/AdminUsuarios/AdminUsuarios";
 
@@ -47,7 +50,18 @@ export default function AppRoutes() {
                     <Route path="/coordinador" element={<Coordinador />} />
                     <Route path="/monitor" element={<Monitor />} />
                     <Route path="/monitores" element={<Monitores />} />
+                    <Route path="/convocatorias" element={<Convocatorias />} />
                     <Route path="/credenciales" element={<Credenciales />} />
+
+                    {/* Disponibilidad: solo monitores (HU_006) */}
+                    <Route element={<RutaRol rol="MONITOR" />}>
+                        <Route path="/monitor/disponibilidad" element={<MonitorDisponibilidad />} />
+                    </Route>
+
+                    {/* Gestión de convocatorias: solo coordinadores (HU_008/HU_009) */}
+                    <Route element={<RutaRol rol="COORDINADOR" />}>
+                        <Route path="/coordinador/convocatorias" element={<CoordinadorConvocatorias />} />
+                    </Route>
 
                     {/* Solo administrador */}
                     <Route element={<RutaRol rol="ADMINISTRADOR" />}>

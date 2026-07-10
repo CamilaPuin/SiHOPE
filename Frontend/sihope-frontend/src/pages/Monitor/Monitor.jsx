@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 
 /** Panel del monitor. Contenido de ejemplo; el saludo usa la sesión. */
@@ -51,9 +52,9 @@ export default function Monitor() {
                             <span className="muted">Sin definir</span>
                         </div>
                     </div>
-                    <a href="#" className="btn btn-primary btn-sm mt-16">
+                    <Link to="/monitor/disponibilidad" className="btn btn-primary btn-sm mt-16">
                         Configurar disponibilidad
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="card">

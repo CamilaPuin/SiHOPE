@@ -13,10 +13,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import edu.uptc.swii.sihope.domain.Historial;
+import edu.uptc.swii.sihope.domain.Postulacion;
 import edu.uptc.swii.sihope.domain.Role;
 import edu.uptc.swii.sihope.domain.User;
 import edu.uptc.swii.sihope.dto.UserDTO;
 import edu.uptc.swii.sihope.repository.HistorialRepository;
+import edu.uptc.swii.sihope.repository.PostulacionRepository;
 import edu.uptc.swii.sihope.repository.RoleRepository;
 import edu.uptc.swii.sihope.repository.UserRepository;
 
@@ -31,14 +33,17 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final HistorialRepository historialRepository;
+    private final PostulacionRepository postulacionRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public UserService(UserRepository userRepository, RoleRepository roleRepository,
-                       HistorialRepository historialRepository, EmailService emailService) {
+                       HistorialRepository historialRepository,
+                       PostulacionRepository postulacionRepository, EmailService emailService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.historialRepository = historialRepository;
+        this.postulacionRepository = postulacionRepository;
         this.emailService = emailService;
     }
 
@@ -201,6 +206,7 @@ public class UserService {
         User u = opt.get();
         String rolAnterior = u.getRole() != null ? u.getRole().getNombre() : "—";
         u.setRole(obtenerRol(rolNombre));
+        u.setTokenVersion(u.getTokenVersion() + 1); // invalida los JWT vigentes tras el cambio de rol
         userRepository.save(u);
         registrar(u, Historial.CAMBIO_ROL, "Rol cambiado de " + rolAnterior + " a " + rolNombre);
         return true;
@@ -213,9 +219,42 @@ public class UserService {
         }
         User u = opt.get();
         u.setActivo(!u.isActivo());
+        u.setTokenVersion(u.getTokenVersion() + 1); // invalida los JWT vigentes tras el cambio de estado
         userRepository.save(u);
         registrar(u, Historial.ESTADO_CUENTA, u.isActivo() ? "Cuenta activada" : "Cuenta desactivada");
         return u.isActivo();
+    }
+
+    /** Resultado de la promoción de un aspirante a monitor (HU_009). */
+    public enum ResultadoPromocion { OK, NO_EXISTE, NO_APROBADO, YA_ES_MONITOR }
+
+    /**
+     * Promueve a MONITOR a un aspirante aprobado (HU_009).
+     *
+     * <p>Solo procede si el usuario tiene al menos una postulación en estado
+     * APROBADA (mitigación 4.2). Al cambiar el rol incrementa {@code tokenVersion},
+     * invalidando de inmediato cualquier JWT vigente del usuario para forzar un
+     * nuevo inicio de sesión con los permisos actualizados (mitigación de mayor riesgo).
+     */
+    public ResultadoPromocion promoverAMonitor(Integer usuarioId) {
+        Optional<User> opt = userRepository.findById(usuarioId);
+        if (opt.isEmpty()) {
+            return ResultadoPromocion.NO_EXISTE;
+        }
+        User u = opt.get();
+        if (u.getRole() != null && "MONITOR".equals(u.getRole().getNombre())) {
+            return ResultadoPromocion.YA_ES_MONITOR;
+        }
+        if (!postulacionRepository.existsByAspiranteIdAndEstado(usuarioId, Postulacion.APROBADA)) {
+            return ResultadoPromocion.NO_APROBADO;
+        }
+        String rolAnterior = u.getRole() != null ? u.getRole().getNombre() : "—";
+        u.setRole(obtenerRol("MONITOR"));
+        u.setTokenVersion(u.getTokenVersion() + 1);
+        userRepository.save(u);
+        registrar(u, Historial.CAMBIO_ROL,
+                "Promovido de " + rolAnterior + " a MONITOR tras aprobación de postulación");
+        return ResultadoPromocion.OK;
     }
 
     public enum ResultadoCambio { OK, ACTUAL_INCORRECTA, NUEVA_INVALIDA }
