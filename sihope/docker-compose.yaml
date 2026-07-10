@@ -37,6 +37,12 @@ services:
       # Orígenes permitidos por CORS: dev (Vite) y el dominio del frontend en Vercel.
       # Sobreescribe con tu URL real de Vercel (separa varias por comas, sin espacios).
       - APP_CORS_ALLOWED_ORIGINS=${APP_CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      # Correo (API de Gmail). Si GMAIL_REFRESH_TOKEN queda vacío, se usa el modo simulado (log).
+      - APP_FRONTEND_BASE_URL=${APP_FRONTEND_BASE_URL:-http://localhost:5173}
+      - MAIL_FROM=${MAIL_FROM:-}
+      - GMAIL_CLIENT_ID=${GMAIL_CLIENT_ID:-}
+      - GMAIL_CLIENT_SECRET=${GMAIL_CLIENT_SECRET:-}
+      - GMAIL_REFRESH_TOKEN=${GMAIL_REFRESH_TOKEN:-}
 
 volumes:
   mysql_data:
