@@ -20,7 +20,7 @@ const ETIQUETA_ROL = {
     ADMINISTRADOR: "Administrador"
 };
 
-/** Toast breve reutilizado para las acciones de la tabla. */
+
 const toast = (icon, title) =>
     Swal.fire({
         toast: true,
@@ -43,7 +43,7 @@ export default function AdminUsuarios() {
     const [exitoCrear, setExitoCrear] = useState("");
     const [creando, setCreando] = useState(false);
 
-    // Recarga la tabla tras crear/actualizar (invocada desde los manejadores).
+
     const cargarUsuarios = useCallback(async () => {
         try {
             const res = await listar();
@@ -56,7 +56,6 @@ export default function AdminUsuarios() {
         }
     }, []);
 
-    // Carga inicial: el setState vive dentro de los callbacks de la promesa.
     useEffect(() => {
         let activo = true;
         listar()

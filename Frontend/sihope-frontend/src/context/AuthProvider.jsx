@@ -3,11 +3,7 @@ import { AuthContext } from "./authContext";
 import * as authService from "../services/authService";
 import { obtenerToken } from "../utils/token";
 
-/**
- * Provee el estado de sesión a toda la app. Al montar, si hay un token JWT en
- * localStorage, hidrata la sesión con GET /api/auth/me. Mientras resuelve,
- * `cargando` es true para que las rutas protegidas no redirijan antes de tiempo.
- */
+
 export default function AuthProvider({ children }) {
     const [usuario, setUsuario] = useState(null);
     const [cargando, setCargando] = useState(true);
@@ -24,7 +20,6 @@ export default function AuthProvider({ children }) {
                 if (activo) setUsuario(res.data ?? null);
             })
             .catch(() => {
-                // Token inválido/expirado o error de red → no hay usuario autenticado.
                 if (activo) setUsuario(null);
             })
             .finally(() => {
