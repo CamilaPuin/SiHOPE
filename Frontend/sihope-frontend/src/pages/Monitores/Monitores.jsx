@@ -1,177 +1,122 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Alert from "../../components/common/Alert";
+import Spinner from "../../components/common/Spinner";
+import { listarMonitores } from "../../services/disponibilidadService";
+import { nombreDia, rangoBloque, ordenarBloques } from "../../utils/horario";
 
 /**
- * Directorio de monitores. Datos de ejemplo (aún no hay endpoint); el filtrado
- * por asignatura y texto se hace en el cliente, como en el mockup monitores.html.
+ * Directorio de monitores con datos reales (HU_006, lado de lectura): cada tarjeta
+ * muestra el monitor y las franjas horarias que publicó. El filtro por texto se
+ * aplica en el cliente sobre nombre y correo.
  */
-const MONITORES = [
-    {
-        id: 1,
-        iniciales: "AG",
-        nombre: "Ana Gómez",
-        programa: "Ingeniería de Sistemas · 7° semestre",
-        asignatura: "Cálculo Diferencial",
-        buscar: "ana gómez cálculo límites derivadas",
-        temas: ["Límites", "Derivadas", "Continuidad"],
-        horarios: [
-            { dia: "Lunes", hora: "10:00 – 12:00" },
-            { dia: "Miércoles", hora: "14:00 – 16:00" }
-        ]
-    },
-    {
-        id: 2,
-        iniciales: "CR",
-        nombre: "Carlos Ruiz",
-        programa: "Ingeniería de Sistemas · 6° semestre",
-        asignatura: "Programación I",
-        buscar: "carlos ruiz programación java arreglos",
-        temas: ["Java", "Arreglos", "Funciones"],
-        horarios: [
-            { dia: "Martes", hora: "08:00 – 10:00" },
-            { dia: "Jueves", hora: "16:00 – 18:00" }
-        ]
-    },
-    {
-        id: 3,
-        iniciales: "LD",
-        nombre: "Laura Díaz",
-        programa: "Ingeniería Electrónica · 8° semestre",
-        asignatura: "Física Mecánica",
-        buscar: "laura díaz física cinemática dinámica",
-        temas: ["Cinemática", "Dinámica"],
-        horarios: [{ dia: "Viernes", hora: "08:00 – 11:00" }]
-    },
-    {
-        id: 4,
-        iniciales: "PM",
-        nombre: "Pedro Martínez",
-        programa: "Ingeniería de Sistemas · 5° semestre",
-        asignatura: "Bases de Datos",
-        buscar: "pedro martínez bases de datos",
-        temas: [],
-        horarios: [],
-        incompleto: true
-    }
-];
-
-const ASIGNATURAS = [
-    "Cálculo Diferencial",
-    "Programación I",
-    "Física Mecánica",
-    "Bases de Datos",
-    "Estructuras de Datos"
-];
-
 export default function Monitores() {
+    const [monitores, setMonitores] = useState([]);
+    const [cargando, setCargando] = useState(true);
+    const [error, setError] = useState("");
     const [texto, setTexto] = useState("");
-    const [asignatura, setAsignatura] = useState("");
+
+    useEffect(() => {
+        let activo = true;
+        listarMonitores()
+            .then((res) => {
+                if (activo) setMonitores(res.data ?? []);
+            })
+            .catch((err) => {
+                if (activo) setError(err.message);
+            })
+            .finally(() => {
+                if (activo) setCargando(false);
+            });
+        return () => {
+            activo = false;
+        };
+    }, []);
 
     const visibles = useMemo(() => {
         const t = texto.trim().toLowerCase();
-        return MONITORES.filter((m) => {
-            const coincideAsig = !asignatura || m.asignatura === asignatura;
-            const coincideTexto = !t || m.buscar.includes(t);
-            return coincideAsig && coincideTexto;
-        });
-    }, [texto, asignatura]);
+        if (!t) return monitores;
+        return monitores.filter(
+            (m) =>
+                (m.nombre ?? "").toLowerCase().includes(t) ||
+                (m.correo ?? "").toLowerCase().includes(t)
+        );
+    }, [texto, monitores]);
 
     return (
         <>
             <div className="page-head">
                 <h1>Monitores disponibles</h1>
                 <p>
-                    Consulta el perfil de cada monitor: asignaturas, temas y horarios de
-                    atención.
+                    Consulta el perfil de cada monitor y las franjas horarias en las que
+                    atiende monitorías.
                 </p>
             </div>
 
-            {/* Filtros */}
+            <Alert tipo="error">{error}</Alert>
+
             <div className="toolbar">
                 <input
                     type="search"
                     className="grow"
-                    placeholder="Buscar por monitor o tema…"
+                    placeholder="Buscar por nombre o correo…"
                     value={texto}
                     onChange={(e) => setTexto(e.target.value)}
                 />
-                <select
-                    value={asignatura}
-                    onChange={(e) => setAsignatura(e.target.value)}
-                    aria-label="Filtrar por asignatura"
-                >
-                    <option value="">Todas las asignaturas</option>
-                    {ASIGNATURAS.map((a) => (
-                        <option key={a} value={a}>
-                            {a}
-                        </option>
-                    ))}
-                </select>
             </div>
 
-            {visibles.length === 0 && (
+            {cargando ? (
+                <div className="text-center mt-16">
+                    <Spinner grande />
+                </div>
+            ) : visibles.length === 0 ? (
                 <Alert tipo="info">
-                    No hay monitores para el filtro seleccionado.
+                    {monitores.length === 0
+                        ? "Aún no hay monitores registrados en el programa."
+                        : "No hay monitores para la búsqueda ingresada."}
                 </Alert>
+            ) : (
+                <section className="grid grid--auto">
+                    {visibles.map((m) => {
+                        const bloques = ordenarBloques(m.disponibilidad ?? []);
+                        return (
+                            <article key={m.id} className="card monitor-card">
+                                <div className="monitor-card__head">
+                                    <span className="monitor-card__av">{m.iniciales}</span>
+                                    <div>
+                                        <div className="monitor-card__name">{m.nombre}</div>
+                                        <div className="monitor-card__prog">{m.correo}</div>
+                                    </div>
+                                </div>
+
+                                {bloques.length === 0 ? (
+                                    <>
+                                        <hr className="divider" />
+                                        <Alert tipo="info" className="mt-8">
+                                            ⓘ Este monitor aún no ha publicado sus horarios de
+                                            atención.
+                                        </Alert>
+                                    </>
+                                ) : (
+                                    <div>
+                                        <strong>Horarios de atención</strong>
+                                        <div className="schedule mt-8">
+                                            {bloques.map((b, i) => (
+                                                <div
+                                                    key={`${b.diaSemana}-${b.horaInicio}-${i}`}
+                                                    className="schedule__row"
+                                                >
+                                                    <span>{nombreDia(b.diaSemana)}</span>
+                                                    <span className="muted">{rangoBloque(b)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </article>
+                        );
+                    })}
+                </section>
             )}
-
-            <section className="grid grid--auto">
-                {visibles.map((m) => (
-                    <article key={m.id} className="card monitor-card">
-                        <div className="monitor-card__head">
-                            <span className="monitor-card__av">{m.iniciales}</span>
-                            <div>
-                                <div className="monitor-card__name">{m.nombre}</div>
-                                <div className="monitor-card__prog">{m.programa}</div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <strong>Asignaturas</strong>
-                            <div className="chips mt-8">
-                                <span className="badge badge-role">{m.asignatura}</span>
-                            </div>
-                        </div>
-
-                        {m.incompleto ? (
-                            <>
-                                <hr className="divider" />
-                                <Alert tipo="info" className="mt-8">
-                                    ⓘ Perfil en proceso de actualización. Este monitor aún
-                                    no ha publicado sus temas y horarios de atención.
-                                </Alert>
-                            </>
-                        ) : (
-                            <>
-                                <div>
-                                    <strong>Temas</strong>
-                                    <div className="chips mt-8">
-                                        {m.temas.map((tema) => (
-                                            <span key={tema} className="badge badge-yellow">
-                                                {tema}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div>
-                                    <strong>Horarios de atención</strong>
-                                    <div className="schedule mt-8">
-                                        {m.horarios.map((h) => (
-                                            <div key={h.dia} className="schedule__row">
-                                                <span>{h.dia}</span>
-                                                <span className="muted">{h.hora}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <button type="button" className="btn btn-primary btn-sm">
-                                    Agendar monitoría
-                                </button>
-                            </>
-                        )}
-                    </article>
-                ))}
-            </section>
         </>
     );
 }

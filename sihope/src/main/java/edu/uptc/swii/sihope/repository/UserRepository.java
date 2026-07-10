@@ -20,4 +20,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<User> findByTokenReset(String tokenReset);
 
     List<User> findAllByOrderByIdAsc();
+
+    /** Monitores del directorio (usuarios con rol MONITOR), ordenados por nombre. */
+    List<User> findByRole_NombreOrderByNombresAscApellidosAsc(String nombreRol);
 }
