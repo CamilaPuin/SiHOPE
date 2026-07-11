@@ -51,7 +51,7 @@ export default function Verify() {
                         <>
                             <Alert type="success">{message}</Alert>
                             <Link
-                                to="/login?verificado"
+                                to="/login?verified"
                                 className="btn btn-primary btn-block mt-16"
                             >
                                 Iniciar sesión

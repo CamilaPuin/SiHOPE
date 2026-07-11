@@ -36,7 +36,7 @@ export default function ResetPassword() {
         setSubmitting(true);
         try {
             await reset({ token, nueva, nueva2 });
-            navigate("/login?reestablecida");
+            navigate("/login?passwordReset");
         } catch (err) {
             setError(err.message);
         } finally {

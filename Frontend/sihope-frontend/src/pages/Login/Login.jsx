@@ -10,20 +10,20 @@ import "./Login.css";
 
 const QUERY_MESSAGES = {
     logout: { type: "success", text: "Cerraste sesión correctamente." },
-    verificado: {
+    verified: {
         type: "success",
         text: "Tu cuenta fue verificada. Ya puedes iniciar sesión."
     },
-    reestablecida: {
+    passwordReset: {
         type: "success",
         text: "Tu contraseña fue restablecida. Inicia sesión con la nueva."
     },
-    registrado: {
+    registered: {
         type: "info",
         text:
             "¡Cuenta creada! Revisa tu correo institucional y verifícala antes de iniciar sesión."
     },
-    tokeninvalido: {
+    invalidToken: {
         type: "error",
         text: "El enlace de verificación no es válido o ya fue utilizado."
     }
@@ -84,7 +84,7 @@ export default function Login() {
                             monitores.
                         </p>
                     </div>
-                    <p className="login-brand__tagline">Connect · Educate · Empower</p>
+                    <p className="login-brand__tagline">Conectate · Edúcate · Superate</p>
                 </section>
 
                 <section className="login-form-wrap">
