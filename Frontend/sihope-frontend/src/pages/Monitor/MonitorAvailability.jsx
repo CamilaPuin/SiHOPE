@@ -140,6 +140,7 @@ export default function MonitorAvailability() {
                             initialView="timeGridWeek"
                             initialDate={monday}
                             firstDay={1}
+                            hiddenDays={[0]}
                             locale="es"
                             allDaySlot={false}
                             slotMinTime="06:00:00"

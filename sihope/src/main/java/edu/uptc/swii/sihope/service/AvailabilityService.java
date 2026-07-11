@@ -84,8 +84,8 @@ public class AvailabilityService {
             TimeBlock b = list.get(i);
             String label = "Bloque " + (i + 1) + ": ";
 
-            if (b.diaSemana() < 1 || b.diaSemana() > 7) {
-                errors.add(label + "el día de la semana debe estar entre 1 (Lunes) y 7 (Domingo).");
+            if (b.diaSemana() < 1 || b.diaSemana() > 6) {
+                errors.add(label + "el día de la semana debe estar entre 1 (Lunes) y 6 (Sabado).");
                 continue;
             }
             LocalTime start = parseTime(b.horaInicio());
