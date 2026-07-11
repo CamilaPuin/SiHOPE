@@ -94,7 +94,7 @@ export default function Registration() {
                                 id="nombres"
                                 value={form.nombres}
                                 onChange={update("nombres")}
-                                placeholder="Juan Manuel"
+                                placeholder="Pedrito José"
                                 error={errors.nombres}
                             />
                             <Field
@@ -102,7 +102,7 @@ export default function Registration() {
                                 id="apellidos"
                                 value={form.apellidos}
                                 onChange={update("apellidos")}
-                                placeholder="Ojeda Sánchez"
+                                placeholder="Ojeda Puin"
                                 error={errors.apellidos}
                             />
                             <Field
