@@ -1,20 +1,27 @@
 package edu.uptc.swii.sihope.dto.request;
 
-/** Datos de inicio de sesión enviados desde React (@RequestBody). */
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class LoginRequest {
 
-    private String correo;
+    @JsonProperty("email")
+    @JsonAlias({"correo", "email"})
+    private String email;
+
+    @JsonProperty("password")
+    @JsonAlias({"password", "contrasena"})
     private String password;
 
     public LoginRequest() {
     }
 
-    public String getCorreo() {
-        return correo;
+    public String getEmail() {
+        return email;
     }
 
-    public void setCorreo(String correo) {
-        this.correo = correo;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getPassword() {
@@ -24,4 +31,5 @@ public class LoginRequest {
     public void setPassword(String password) {
         this.password = password;
     }
+
 }

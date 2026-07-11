@@ -1,0 +1,6 @@
+docker compose up -d mysql 
+./mvnw spring-boot:run 
+cd C:\Users\dcami\Desktop\SiHOPE\Frontend\sihope-frontend
+npm run dev
+
+entrar a localhost:5173. 

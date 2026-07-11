@@ -9,24 +9,19 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-/**
- * Configuración web: CORS, guarda de autenticación por JWT y resolución del
- * argumento {@code UsuarioAutenticado} en los controllers.
- */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    /** Orígenes del frontend permitidos por CORS (lista separada por comas, configurable por entorno). */
     @Value("${app.cors.allowed-origins}")
     private String[] allowedOrigins;
 
     private final JwtAuthInterceptor jwtAuthInterceptor;
-    private final UsuarioArgumentResolver usuarioArgumentResolver;
+    private final UserArgumentResolver userArgumentResolver;
 
     public WebConfig(JwtAuthInterceptor jwtAuthInterceptor,
-                     UsuarioArgumentResolver usuarioArgumentResolver) {
+                     UserArgumentResolver userArgumentResolver) {
         this.jwtAuthInterceptor = jwtAuthInterceptor;
-        this.usuarioArgumentResolver = usuarioArgumentResolver;
+        this.userArgumentResolver = userArgumentResolver;
     }
 
     @Override
@@ -36,6 +31,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/auth/me",
                         "/api/admin/**",
                         "/api/monitor/**",
+                        "/api/monitores",
                         "/api/monitores/**",
                         "/api/coordinador/**",
                         "/api/convocatorias/**",
@@ -44,7 +40,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
-        resolvers.add(usuarioArgumentResolver);
+        resolvers.add(userArgumentResolver);
     }
 
     @Override

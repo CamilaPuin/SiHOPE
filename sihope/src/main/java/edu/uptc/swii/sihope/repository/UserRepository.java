@@ -9,15 +9,21 @@ import edu.uptc.swii.sihope.domain.User;
 
 public interface UserRepository extends JpaRepository<User, Integer> {
 
-    Optional<User> findByCorreo(String correo);
+    Optional<User> findByEmail(String email);
 
-    boolean existsByCorreo(String correo);
+    boolean existsByEmail(String email);
 
-    boolean existsByCodigo(String codigo);
+    boolean existsByStudentCode(String studentCode);
 
-    Optional<User> findByTokenVerificacion(String tokenVerificacion);
+    Optional<User> findByVerificationToken(String verificationToken);
 
-    Optional<User> findByTokenReset(String tokenReset);
+    Optional<User> findByResetToken(String resetToken);
 
     List<User> findAllByOrderByIdAsc();
+
+    List<User> findByRole_NameOrderByFirstNameAscLastNameAsc(String roleName);
+
+    default List<User> findByRole_NombreOrderByNombresAscApellidosAsc(String nombreRol) {
+        return findByRole_NameOrderByFirstNameAscLastNameAsc(nombreRol);
+    }
 }

@@ -9,14 +9,10 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 
-/**
- * Configuración de springdoc-openapi. Define la información general de la API y el
- * esquema de seguridad Bearer JWT para que Swagger UI permita enviar el token.
- */
 @Configuration
 public class OpenApiConfig {
 
-    private static final String ESQUEMA_JWT = "bearer-jwt";
+    private static final String JWT_SCHEME = "bearer-jwt";
 
     @Bean
     public OpenAPI sihopeOpenAPI() {
@@ -27,8 +23,8 @@ public class OpenApiConfig {
                         .description("API del programa de monitorías académicas de la UPTC. "
                                 + "Autenticación por JWT: usa POST /api/auth/login y envía el token como "
                                 + "'Authorization: Bearer <token>'."))
-                .addSecurityItem(new SecurityRequirement().addList(ESQUEMA_JWT))
-                .components(new Components().addSecuritySchemes(ESQUEMA_JWT,
+                .addSecurityItem(new SecurityRequirement().addList(JWT_SCHEME))
+                .components(new Components().addSecuritySchemes(JWT_SCHEME,
                         new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")

@@ -1,11 +1,17 @@
 package edu.uptc.swii.sihope.dto.request;
 
-/** Restablecimiento de contraseña mediante token de recuperación (@RequestBody). */
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class ResetPasswordRequest {
 
+    @JsonProperty("token")
     private String token;
-    private String nueva;
-    private String nueva2;
+
+    @JsonProperty("nueva")
+    private String newPassword;
+
+    @JsonProperty("nueva2")
+    private String newPassword2;
 
     public ResetPasswordRequest() {
     }
@@ -18,19 +24,20 @@ public class ResetPasswordRequest {
         this.token = token;
     }
 
-    public String getNueva() {
-        return nueva;
+    public String getNewPassword() {
+        return newPassword;
     }
 
-    public void setNueva(String nueva) {
-        this.nueva = nueva;
+    public void setNewPassword(String newPassword) {
+        this.newPassword = newPassword;
     }
 
-    public String getNueva2() {
-        return nueva2;
+    public String getNewPassword2() {
+        return newPassword2;
     }
 
-    public void setNueva2(String nueva2) {
-        this.nueva2 = nueva2;
+    public void setNewPassword2(String newPassword2) {
+        this.newPassword2 = newPassword2;
     }
+
 }

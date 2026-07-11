@@ -1,36 +1,43 @@
 package edu.uptc.swii.sihope.dto.request;
 
-/** Cambio de contraseña de la cuenta autenticada (@RequestBody). */
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class UpdatePasswordRequest {
 
-    private String actual;
-    private String nueva;
-    private String nueva2;
+    @JsonProperty("actual")
+    private String currentPassword;
+
+    @JsonProperty("nueva")
+    private String newPassword;
+
+    @JsonProperty("nueva2")
+    private String newPassword2;
 
     public UpdatePasswordRequest() {
     }
 
-    public String getActual() {
-        return actual;
+    public String getCurrentPassword() {
+        return currentPassword;
     }
 
-    public void setActual(String actual) {
-        this.actual = actual;
+    public void setCurrentPassword(String currentPassword) {
+        this.currentPassword = currentPassword;
     }
 
-    public String getNueva() {
-        return nueva;
+    public String getNewPassword() {
+        return newPassword;
     }
 
-    public void setNueva(String nueva) {
-        this.nueva = nueva;
+    public void setNewPassword(String newPassword) {
+        this.newPassword = newPassword;
     }
 
-    public String getNueva2() {
-        return nueva2;
+    public String getNewPassword2() {
+        return newPassword2;
     }
 
-    public void setNueva2(String nueva2) {
-        this.nueva2 = nueva2;
+    public void setNewPassword2(String newPassword2) {
+        this.newPassword2 = newPassword2;
     }
+
 }

@@ -1,39 +1,49 @@
 package edu.uptc.swii.sihope.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.uptc.swii.sihope.domain.User;
 
-/**
- * Vista de salida de un usuario para la API. Evita serializar la entidad JPA
- * {@link User} directamente (no expone el hash BCrypt ni la relación perezosa Role).
- * La entidad permanece intacta (regla 13).
- */
 public class UserResponse {
 
     private Integer id;
-    private String nombres;
-    private String apellidos;
-    private String codigo;
-    private String correo;
-    private boolean activo;
-    private boolean verificado;
-    private String rol;
+
+    @JsonProperty("nombres")
+    private String firstName;
+
+    @JsonProperty("apellidos")
+    private String lastName;
+
+    @JsonProperty("codigo")
+    private String studentCode;
+
+    @JsonProperty("correo")
+    private String email;
+
+    @JsonProperty("activo")
+    private boolean active;
+
+    @JsonProperty("verificado")
+    private boolean verified;
+
+    @JsonProperty("rol")
+    private String role;
 
     public UserResponse() {
     }
 
-    public UserResponse(Integer id, String nombres, String apellidos, String codigo,
-                        String correo, boolean activo, boolean verificado, String rol) {
+    public UserResponse(Integer id, String firstName, String lastName, String studentCode,
+                        String email, boolean active, boolean verified, String role) {
         this.id = id;
-        this.nombres = nombres;
-        this.apellidos = apellidos;
-        this.codigo = codigo;
-        this.correo = correo;
-        this.activo = activo;
-        this.verificado = verificado;
-        this.rol = rol;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.studentCode = studentCode;
+        this.email = email;
+        this.active = active;
+        this.verified = verified;
+        this.role = role;
     }
 
-    public static UserResponse desde(User u) {
+    public static UserResponse from(User u) {
         return new UserResponse(
                 u.getId(),
                 u.getNombres(),
@@ -54,59 +64,60 @@ public class UserResponse {
         this.id = id;
     }
 
-    public String getNombres() {
-        return nombres;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setNombres(String nombres) {
-        this.nombres = nombres;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
 
-    public String getApellidos() {
-        return apellidos;
+    public String getLastName() {
+        return lastName;
     }
 
-    public void setApellidos(String apellidos) {
-        this.apellidos = apellidos;
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
-    public String getCodigo() {
-        return codigo;
+    public String getStudentCode() {
+        return studentCode;
     }
 
-    public void setCodigo(String codigo) {
-        this.codigo = codigo;
+    public void setStudentCode(String studentCode) {
+        this.studentCode = studentCode;
     }
 
-    public String getCorreo() {
-        return correo;
+    public String getEmail() {
+        return email;
     }
 
-    public void setCorreo(String correo) {
-        this.correo = correo;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
-    public boolean isActivo() {
-        return activo;
+    public boolean isActive() {
+        return active;
     }
 
-    public void setActivo(boolean activo) {
-        this.activo = activo;
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
-    public boolean isVerificado() {
-        return verificado;
+    public boolean isVerified() {
+        return verified;
     }
 
-    public void setVerificado(boolean verificado) {
-        this.verificado = verificado;
+    public void setVerified(boolean verified) {
+        this.verified = verified;
     }
 
-    public String getRol() {
-        return rol;
+    public String getRole() {
+        return role;
     }
 
-    public void setRol(String rol) {
-        this.rol = rol;
+    public void setRole(String role) {
+        this.role = role;
     }
+
 }

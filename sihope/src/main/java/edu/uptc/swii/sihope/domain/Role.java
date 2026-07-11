@@ -1,5 +1,7 @@
 package edu.uptc.swii.sihope.domain;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -14,13 +16,15 @@ public class Role {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    private String nombre;
+    @Column(name = "nombre")
+    @JsonProperty("nombre")
+    private String name;
 
     public Role() {
     }
 
-    public Role(String nombre) {
-        this.nombre = nombre;
+    public Role(String name) {
+        this.name = name;
     }
 
     public Integer getId() {
@@ -31,11 +35,20 @@ public class Role {
         this.id = id;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    // Spanish aliases for compatibility
     public String getNombre() {
-        return nombre;
+        return getName();
     }
 
     public void setNombre(String nombre) {
-        this.nombre = nombre;
+        setName(nombre);
     }
 }

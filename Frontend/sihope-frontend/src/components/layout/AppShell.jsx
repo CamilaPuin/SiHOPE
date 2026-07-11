@@ -3,8 +3,7 @@ import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import Footer from "./Footer";
 
-/** Título de la barra superior según la ruta (equivale al parámetro `section`). */
-const SECCIONES = {
+const SECTIONS = {
     "/home": "Panel principal",
     "/coordinador": "Panel del coordinador",
     "/monitor": "Panel del monitor",
@@ -13,13 +12,9 @@ const SECCIONES = {
     "/admin/usuarios": "Administración"
 };
 
-/**
- * Estructura común de las páginas internas: barra lateral + barra superior +
- * contenido (<Outlet/>) + pie. Reproduce el grid `.app-shell` de sihope.css.
- */
 export default function AppShell() {
     const { pathname } = useLocation();
-    const section = SECCIONES[pathname] ?? "SiHope";
+    const section = SECTIONS[pathname] ?? "SiHope";
 
     return (
         <div className="app-shell">

@@ -25,30 +25,30 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        crearSiNoExiste("Admin", "SiHope", "ADM-0001", "admin@uptc.edu.co", "Admin2026*", "ADMINISTRADOR");
-        crearSiNoExiste("Coordinador", "SiHope", "COORD-0001", "coordinador@uptc.edu.co", "Coord2026*", "COORDINADOR");
-        crearSiNoExiste("Monitor", "SiHope", "MON-0001", "monitor@uptc.edu.co", "Monitor2026*", "MONITOR");
-        crearSiNoExiste("Estudiante", "SiHope", "202312345", "estudiante@uptc.edu.co", "Estudiante2026*", "ESTUDIANTE");
+        createIfMissing("Admin", "SiHope", "ADM-0001", "admin@uptc.edu.co", "Admin2026*", "ADMINISTRADOR");
+        createIfMissing("Coordinador", "SiHope", "COORD-0001", "coordinador@uptc.edu.co", "Coord2026*", "COORDINADOR");
+        createIfMissing("Monitor", "SiHope", "MON-0001", "monitor@uptc.edu.co", "Monitor2026*", "MONITOR");
+        createIfMissing("Estudiante", "SiHope", "202312345", "estudiante@uptc.edu.co", "Estudiante2026*", "ESTUDIANTE");
     }
 
-    private void crearSiNoExiste(String nombres, String apellidos, String codigo,
-                                 String correo, String rawPassword, String nombreRol) {
-        if (userRepository.existsByCorreo(correo)) {
+    private void createIfMissing(String firstName, String lastName, String studentCode,
+                                 String email, String rawPassword, String roleName) {
+        if (userRepository.existsByEmail(email)) {
             return;
         }
-        Role rol = roleRepository.findByNombre(nombreRol);
-        if (rol == null) {
-            rol = roleRepository.save(new Role(nombreRol));
+        Role role = roleRepository.findByName(roleName);
+        if (role == null) {
+            role = roleRepository.save(new Role(roleName));
         }
         User u = new User();
-        u.setNombres(nombres);
-        u.setApellidos(apellidos);
-        u.setCodigo(codigo);
-        u.setCorreo(correo);
-        u.setPassword(userService.codificar(rawPassword));
-        u.setActivo(true);
-        u.setVerificado(true);
-        u.setRole(rol);
+        u.setFirstName(firstName);
+        u.setLastName(lastName);
+        u.setStudentCode(studentCode);
+        u.setEmail(email);
+        u.setPassword(userService.encode(rawPassword));
+        u.setActive(true);
+        u.setVerified(true);
+        u.setRole(role);
         userRepository.save(u);
     }
 }

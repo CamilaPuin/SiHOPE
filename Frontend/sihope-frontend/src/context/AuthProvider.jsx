@@ -1,61 +1,59 @@
 import { useCallback, useEffect, useState } from "react";
 import { AuthContext } from "./authContext";
 import * as authService from "../services/authService";
-import { obtenerToken } from "../utils/token";
+import { getToken } from "../utils/token";
 
-/**
- * Provee el estado de sesión a toda la app. Al montar, si hay un token JWT en
- * localStorage, hidrata la sesión con GET /api/auth/me. Mientras resuelve,
- * `cargando` es true para que las rutas protegidas no redirijan antes de tiempo.
- */
 export default function AuthProvider({ children }) {
-    const [usuario, setUsuario] = useState(null);
-    const [cargando, setCargando] = useState(true);
+    const [user, setUser] = useState(null);
+    // Only start in the loading state when there is a token to validate;
+    // otherwise loading is already resolved and the effect below is a no-op.
+    const [loading, setLoading] = useState(() => Boolean(getToken()));
 
     useEffect(() => {
-        let activo = true;
-        if (!obtenerToken()) {
-            setCargando(false);
-            return;
-        }
+        if (!getToken()) return undefined;
+        let active = true;
         authService
             .me()
             .then((res) => {
-                if (activo) setUsuario(res.data ?? null);
+                if (active) setUser(res.data ?? null);
             })
             .catch(() => {
-                // Token inválido/expirado o error de red → no hay usuario autenticado.
-                if (activo) setUsuario(null);
+                if (active) setUser(null);
             })
             .finally(() => {
-                if (activo) setCargando(false);
+                if (active) setLoading(false);
             });
         return () => {
-            activo = false;
+            active = false;
         };
     }, []);
 
-    const iniciarSesion = useCallback(async (credenciales) => {
-        const res = await authService.login(credenciales);
-        const usuarioSesion = res.data?.usuario ?? null;
-        setUsuario(usuarioSesion);
-        return usuarioSesion;
+    const signIn = useCallback(async (credentials) => {
+        const res = await authService.login(credentials);
+        const sessionUser = res.data?.usuario ?? null;
+        setUser(sessionUser);
+        return sessionUser;
     }, []);
 
-    const cerrarSesion = useCallback(async () => {
+    const signOut = useCallback(async () => {
         try {
             await authService.logout();
         } finally {
-            setUsuario(null);
+            setUser(null);
         }
     }, []);
 
     const value = {
-        usuario,
-        cargando,
-        iniciarSesion,
-        cerrarSesion,
-        estaAutenticado: Boolean(usuario)
+        user,
+        usuario: user,
+        loading,
+        cargando: loading,
+        signIn,
+        iniciarSesion: signIn,
+        signOut,
+        cerrarSesion: signOut,
+        isAuthenticated: Boolean(user),
+        estaAutenticado: Boolean(user)
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

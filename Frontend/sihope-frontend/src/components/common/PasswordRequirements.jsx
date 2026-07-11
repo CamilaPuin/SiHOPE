@@ -1,15 +1,11 @@
-import { REGLAS_PASSWORD } from "../../utils/password";
+import { PASSWORD_RULES } from "../../utils/password";
 
-/**
- * Lista de requisitos de contraseña que se resaltan en vivo según el valor.
- * Reproduce el bloque `.pwd-reqs` de los mockups.
- */
-export default function PasswordRequirements({ valor = "" }) {
+export default function PasswordRequirements({ value = "" }) {
     return (
         <ul className="pwd-reqs">
-            {REGLAS_PASSWORD.map((regla) => (
-                <li key={regla.clave} className={regla.test(valor) ? "ok" : ""}>
-                    {regla.etiqueta}
+            {PASSWORD_RULES.map((rule) => (
+                <li key={rule.key} className={rule.test(value) ? "ok" : ""}>
+                    {rule.label}
                 </li>
             ))}
         </ul>

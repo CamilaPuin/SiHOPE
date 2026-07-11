@@ -1,18 +1,21 @@
 package edu.uptc.swii.sihope.dto.request;
 
-/** Cambio de rol de un usuario (@RequestBody). */
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class ChangeRoleRequest {
 
-    private String rol;
+    @JsonProperty("rol")
+    private String role;
 
     public ChangeRoleRequest() {
     }
 
-    public String getRol() {
-        return rol;
+    public String getRole() {
+        return role;
     }
 
-    public void setRol(String rol) {
-        this.rol = rol;
+    public void setRole(String role) {
+        this.role = role;
     }
+
 }

@@ -16,36 +16,32 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import edu.uptc.swii.sihope.config.UsuarioArgumentResolver;
-import edu.uptc.swii.sihope.dto.UsuarioAutenticado;
-import edu.uptc.swii.sihope.service.DisponibilidadService;
+import edu.uptc.swii.sihope.config.UserArgumentResolver;
+import edu.uptc.swii.sihope.dto.AuthenticatedUser;
+import edu.uptc.swii.sihope.service.AvailabilityService;
 
-/**
- * Prueba de integración del endpoint principal de HU_006
- * (PUT /api/monitor/disponibilidad) con MockMvc standalone.
- */
 class MonitorControllerTest {
 
-    private DisponibilidadService service;
+    private AvailabilityService service;
     private MockMvc mvc;
 
-    private static final UsuarioAutenticado MONITOR =
-            new UsuarioAutenticado(1, "monitor@uptc.edu.co", "MONITOR", "Mon Itor", "MI");
+    private static final AuthenticatedUser MONITOR =
+            new AuthenticatedUser(1, "monitor@uptc.edu.co", "MONITOR", "Mon Itor", "MI");
 
     @BeforeEach
     void setUp() {
-        service = Mockito.mock(DisponibilidadService.class);
+        service = Mockito.mock(AvailabilityService.class);
         mvc = MockMvcBuilders.standaloneSetup(new MonitorController(service))
-                .setCustomArgumentResolvers(new UsuarioArgumentResolver())
+                .setCustomArgumentResolvers(new UserArgumentResolver())
                 .build();
     }
 
     @Test
-    void guardaDisponibilidadValida() throws Exception {
-        when(service.reemplazar(anyInt(), any())).thenReturn(List.of());
+    void savesValidAvailability() throws Exception {
+        when(service.replace(anyInt(), any())).thenReturn(List.of());
 
         mvc.perform(put("/api/monitor/disponibilidad")
-                        .requestAttr(UsuarioAutenticado.ATRIBUTO, MONITOR)
+                        .requestAttr(AuthenticatedUser.ATTRIBUTE, MONITOR)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"bloques\":[{\"diaSemana\":1,\"horaInicio\":\"10:00\",\"horaFin\":\"12:00\"}]}"))
                 .andExpect(status().isOk())
@@ -53,11 +49,11 @@ class MonitorControllerTest {
     }
 
     @Test
-    void devuelve400CuandoHayErroresDeValidacion() throws Exception {
-        when(service.reemplazar(anyInt(), any())).thenReturn(List.of("Hay franjas que se solapan."));
+    void returns400WhenThereAreValidationErrors() throws Exception {
+        when(service.replace(anyInt(), any())).thenReturn(List.of("Hay franjas que se solapan."));
 
         mvc.perform(put("/api/monitor/disponibilidad")
-                        .requestAttr(UsuarioAutenticado.ATRIBUTO, MONITOR)
+                        .requestAttr(AuthenticatedUser.ATTRIBUTE, MONITOR)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"bloques\":[]}"))
                 .andExpect(status().isBadRequest())

@@ -1,48 +1,60 @@
 package edu.uptc.swii.sihope.dto.request;
 
-/** Datos de auto-registro de un estudiante enviados desde React (@RequestBody). */
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class RegisterRequest {
 
-    private String nombres;
-    private String apellidos;
-    private String codigo;
-    private String correo;
+    @JsonProperty("nombres")
+    private String firstName;
+
+    @JsonProperty("apellidos")
+    private String lastName;
+
+    @JsonProperty("codigo")
+    private String studentCode;
+
+    @JsonProperty("correo")
+    private String email;
+
+    @JsonProperty("password")
     private String password;
+
+    @JsonProperty("password2")
     private String password2;
 
     public RegisterRequest() {
     }
 
-    public String getNombres() {
-        return nombres;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setNombres(String nombres) {
-        this.nombres = nombres;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
 
-    public String getApellidos() {
-        return apellidos;
+    public String getLastName() {
+        return lastName;
     }
 
-    public void setApellidos(String apellidos) {
-        this.apellidos = apellidos;
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
-    public String getCodigo() {
-        return codigo;
+    public String getStudentCode() {
+        return studentCode;
     }
 
-    public void setCodigo(String codigo) {
-        this.codigo = codigo;
+    public void setStudentCode(String studentCode) {
+        this.studentCode = studentCode;
     }
 
-    public String getCorreo() {
-        return correo;
+    public String getEmail() {
+        return email;
     }
 
-    public void setCorreo(String correo) {
-        this.correo = correo;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getPassword() {
@@ -60,4 +72,5 @@ public class RegisterRequest {
     public void setPassword2(String password2) {
         this.password2 = password2;
     }
+
 }

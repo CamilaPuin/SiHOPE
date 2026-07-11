@@ -6,5 +6,9 @@ import edu.uptc.swii.sihope.domain.Role;
 
 public interface RoleRepository extends JpaRepository<Role, Integer> {
 
-    Role findByNombre(String nombre);
+    Role findByName(String name);
+
+    default Role findByNombre(String nombre) {
+        return findByName(nombre);
+    }
 }

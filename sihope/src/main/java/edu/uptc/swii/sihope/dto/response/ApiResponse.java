@@ -1,9 +1,5 @@
 package edu.uptc.swii.sihope.dto.response;
 
-/**
- * Envoltorio estándar de todas las respuestas de la API REST.
- * Estructura fija: { success, message, data } (regla 18).
- */
 public class ApiResponse<T> {
 
     private boolean success;
@@ -18,8 +14,6 @@ public class ApiResponse<T> {
         this.message = message;
         this.data = data;
     }
-
-    // ---- Factorías de conveniencia ----
 
     public static <T> ApiResponse<T> ok(String message, T data) {
         return new ApiResponse<>(true, message, data);
@@ -36,8 +30,6 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> error(String message, T data) {
         return new ApiResponse<>(false, message, data);
     }
-
-    // ---- Getters / setters (necesarios para la serialización JSON) ----
 
     public boolean isSuccess() {
         return success;

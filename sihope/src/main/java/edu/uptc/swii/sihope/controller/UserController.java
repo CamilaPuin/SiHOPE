@@ -31,21 +31,21 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<UserResponse>>> listar() {
-        List<UserResponse> usuarios = userService.listarUsuarios().stream()
-                .map(UserResponse::desde)
+    public ResponseEntity<ApiResponse<List<UserResponse>>> list() {
+        List<UserResponse> users = userService.listUsers().stream()
+                .map(UserResponse::from)
                 .toList();
-        return ResponseEntity.ok(ApiResponse.ok("Usuarios obtenidos.", usuarios));
+        return ResponseEntity.ok(ApiResponse.ok("Usuarios obtenidos.", users));
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Map<String, String>>> crear(@RequestBody CreateUserRequest request) {
-        Map<String, String> errores = userService.crearUsuario(
-                request.getNombre(), request.getCorreo(), request.getDocumento(), request.getRol());
+    public ResponseEntity<ApiResponse<Map<String, String>>> create(@RequestBody CreateUserRequest request) {
+        Map<String, String> errors = userService.createUser(
+                request.getName(), request.getEmail(), request.getDocument(), request.getRole());
 
-        if (!errores.isEmpty()) {
+        if (!errors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("No se pudo crear el usuario.", errores));
+                    .body(ApiResponse.error("No se pudo crear el usuario.", errors));
         }
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -53,16 +53,16 @@ public class UserController {
     }
 
     @PutMapping("/{id}/rol")
-    public ResponseEntity<ApiResponse<Void>> cambiarRol(@PathVariable Integer id,
+    public ResponseEntity<ApiResponse<Void>> changeRole(@PathVariable Integer id,
                                                         @RequestBody ChangeRoleRequest request) {
-        boolean ok = userService.cambiarRol(id, request.getRol());
+        boolean ok = userService.changeRole(id, request.getRole());
         if (ok) {
             return ResponseEntity.ok(ApiResponse.ok("Rol actualizado correctamente."));
         }
 
-        boolean existe = userService.listarUsuarios().stream()
+        boolean exists = userService.listUsers().stream()
                 .anyMatch(u -> id.equals(u.getId()));
-        if (!existe) {
+        if (!exists) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("El usuario no existe."));
         }
@@ -71,13 +71,13 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/estado")
-    public ResponseEntity<ApiResponse<Boolean>> cambiarEstado(@PathVariable Integer id) {
-        Boolean nuevoEstado = userService.cambiarEstado(id);
-        if (nuevoEstado == null) {
+    public ResponseEntity<ApiResponse<Boolean>> changeStatus(@PathVariable Integer id) {
+        Boolean newStatus = userService.changeStatus(id);
+        if (newStatus == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("El usuario no existe."));
         }
-        String mensaje = nuevoEstado ? "Cuenta activada." : "Cuenta desactivada.";
-        return ResponseEntity.ok(ApiResponse.ok(mensaje, nuevoEstado));
+        String message = newStatus ? "Cuenta activada." : "Cuenta desactivada.";
+        return ResponseEntity.ok(ApiResponse.ok(message, newStatus));
     }
 }

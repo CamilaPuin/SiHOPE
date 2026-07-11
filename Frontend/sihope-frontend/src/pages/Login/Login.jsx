@@ -1,82 +1,78 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import Isotipo, { Wordmark } from "../../components/layout/Isotipo";
+import Isotype, { Wordmark } from "../../components/layout/Isotype";
 import Field from "../../components/common/Field";
 import Alert from "../../components/common/Alert";
 import Spinner from "../../components/common/Spinner";
 import { useAuth } from "../../hooks/useAuth";
-import { panelPorRol } from "../../utils/roles";
+import { panelByRole } from "../../utils/roles";
 import "./Login.css";
 
-/** Mensajes informativos que llegan por query-string desde otros flujos. */
-const MENSAJES_QUERY = {
-    logout: { tipo: "success", texto: "Cerraste sesión correctamente." },
+const QUERY_MESSAGES = {
+    logout: { type: "success", text: "Cerraste sesión correctamente." },
     verificado: {
-        tipo: "success",
-        texto: "Tu cuenta fue verificada. Ya puedes iniciar sesión."
+        type: "success",
+        text: "Tu cuenta fue verificada. Ya puedes iniciar sesión."
     },
     reestablecida: {
-        tipo: "success",
-        texto: "Tu contraseña fue restablecida. Inicia sesión con la nueva."
+        type: "success",
+        text: "Tu contraseña fue restablecida. Inicia sesión con la nueva."
     },
     registrado: {
-        tipo: "info",
-        texto:
+        type: "info",
+        text:
             "¡Cuenta creada! Revisa tu correo institucional y verifícala antes de iniciar sesión."
     },
     tokeninvalido: {
-        tipo: "error",
-        texto: "El enlace de verificación no es válido o ya fue utilizado."
+        type: "error",
+        text: "El enlace de verificación no es válido o ya fue utilizado."
     }
 };
 
 export default function Login() {
-    const { iniciarSesion, estaAutenticado, usuario } = useAuth();
+    const { signIn, isAuthenticated, user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
 
-    const [correo, setCorreo] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [enviando, setEnviando] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
 
-    // Si ya hay sesión activa, no mostramos el login.
     useEffect(() => {
-        if (estaAutenticado && usuario) {
-            navigate(panelPorRol(usuario.rol), { replace: true });
+        if (isAuthenticated && user) {
+            navigate(panelByRole(user.rol), { replace: true });
         }
-    }, [estaAutenticado, usuario, navigate]);
+    }, [isAuthenticated, user, navigate]);
 
-    // Banner informativo según el query (?logout, ?verificado, …).
-    const claveMensaje = Object.keys(MENSAJES_QUERY).find((k) =>
+    const messageKey = Object.keys(QUERY_MESSAGES).find((k) =>
         searchParams.has(k)
     );
-    const mensajeQuery = claveMensaje ? MENSAJES_QUERY[claveMensaje] : null;
+    const queryMessage = messageKey ? QUERY_MESSAGES[messageKey] : null;
 
-    const manejarSubmit = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
-        setEnviando(true);
+        setSubmitting(true);
         try {
-            const sesion = await iniciarSesion({ correo, password });
-            const destino = location.state?.desde ?? panelPorRol(sesion.rol);
-            navigate(destino, { replace: true });
+            const session = await signIn({ correo: email, password });
+            const target = location.state?.from ?? panelByRole(session.rol);
+            navigate(target, { replace: true });
         } catch (err) {
             setError(err.message);
         } finally {
-            setEnviando(false);
+            setSubmitting(false);
         }
     };
 
     return (
         <div className="login-wrap">
             <main className="login-card">
-                {/* Panel de marca */}
                 <section className="login-brand">
                     <div className="login-brand__logo">
-                        <Isotipo negativo />
-                        <Wordmark negativo />
+                        <Isotype negative />
+                        <Wordmark negative />
                     </div>
                     <div>
                         <p className="login-brand__headline">
@@ -91,26 +87,25 @@ export default function Login() {
                     <p className="login-brand__tagline">Connect · Educate · Empower</p>
                 </section>
 
-                {/* Panel del formulario */}
                 <section className="login-form-wrap">
                     <h1 className="font-title">Iniciar sesión</h1>
                     <p className="subtitle">
                         Ingresa con tu cuenta institucional para continuar.
                     </p>
 
-                    {mensajeQuery && (
-                        <Alert tipo={mensajeQuery.tipo}>{mensajeQuery.texto}</Alert>
+                    {queryMessage && (
+                        <Alert type={queryMessage.type}>{queryMessage.text}</Alert>
                     )}
-                    <Alert tipo="error">{error}</Alert>
+                    <Alert type="error">{error}</Alert>
 
-                    <form onSubmit={manejarSubmit} noValidate>
+                    <form onSubmit={handleSubmit} noValidate>
                         <Field
                             label="Correo institucional"
                             id="correo"
                             type="email"
                             name="correo"
-                            value={correo}
-                            onChange={(e) => setCorreo(e.target.value)}
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             placeholder="nombre.apellido@uptc.edu.co"
                             autoComplete="username"
                             required
@@ -139,9 +134,9 @@ export default function Login() {
                         <button
                             type="submit"
                             className="btn btn-primary btn-block"
-                            disabled={enviando}
+                            disabled={submitting}
                         >
-                            {enviando ? <Spinner /> : "Entrar"}
+                            {submitting ? <Spinner /> : "Entrar"}
                         </button>
                     </form>
 

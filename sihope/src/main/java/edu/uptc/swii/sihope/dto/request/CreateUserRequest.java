@@ -1,45 +1,54 @@
 package edu.uptc.swii.sihope.dto.request;
 
-/** Alta de usuario por parte de un administrador (@RequestBody). */
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class CreateUserRequest {
 
-    private String nombre;
-    private String correo;
-    private String documento;
-    private String rol;
+    @JsonProperty("nombre")
+    private String name;
+
+    @JsonProperty("correo")
+    private String email;
+
+    @JsonProperty("documento")
+    private String document;
+
+    @JsonProperty("rol")
+    private String role;
 
     public CreateUserRequest() {
     }
 
-    public String getNombre() {
-        return nombre;
+    public String getName() {
+        return name;
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getCorreo() {
-        return correo;
+    public String getEmail() {
+        return email;
     }
 
-    public void setCorreo(String correo) {
-        this.correo = correo;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
-    public String getDocumento() {
-        return documento;
+    public String getDocument() {
+        return document;
     }
 
-    public void setDocumento(String documento) {
-        this.documento = documento;
+    public void setDocument(String document) {
+        this.document = document;
     }
 
-    public String getRol() {
-        return rol;
+    public String getRole() {
+        return role;
     }
 
-    public void setRol(String rol) {
-        this.rol = rol;
+    public void setRole(String role) {
+        this.role = role;
     }
+
 }

@@ -2,6 +2,7 @@ package edu.uptc.swii.sihope.domain;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -19,34 +20,44 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    private String nombres;
+    @Column(name = "nombres")
+    @JsonProperty("nombres")
+    private String firstName;
 
-    private String apellidos;
+    @Column(name = "apellidos")
+    @JsonProperty("apellidos")
+    private String lastName;
 
-    private String codigo;
+    @Column(name = "codigo")
+    @JsonProperty("codigo")
+    private String studentCode;
 
-    private String correo;
+    @Column(name = "correo")
+    @JsonProperty("correo")
+    private String email;
 
     private String password;
 
-    private boolean activo;
+    @Column(name = "activo")
+    @JsonProperty("activo")
+    private boolean active;
 
-    private boolean verificado;
+    @Column(name = "verificado")
+    @JsonProperty("verificado")
+    private boolean verified;
 
     @Column(name = "token_verificacion")
-    private String tokenVerificacion;
+    @JsonProperty("tokenVerificacion")
+    private String verificationToken;
 
     @Column(name = "token_reset")
-    private String tokenReset;
+    @JsonProperty("tokenReset")
+    private String resetToken;
 
     @Column(name = "token_reset_expira")
-    private LocalDateTime tokenResetExpira;
+    @JsonProperty("tokenResetExpira")
+    private LocalDateTime resetTokenExpiresAt;
 
-    /**
-     * Versión del token JWT. Cada JWT emitido incluye este valor; al cambiar el
-     * rol, estado o contraseña se incrementa, invalidando de inmediato cualquier
-     * token previo (fuerza un nuevo inicio de sesión).
-     */
     @Column(name = "token_version", nullable = false)
     private int tokenVersion = 0;
 
@@ -65,36 +76,36 @@ public class User {
         this.id = id;
     }
 
-    public String getNombres() {
-        return nombres;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setNombres(String nombres) {
-        this.nombres = nombres;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
 
-    public String getApellidos() {
-        return apellidos;
+    public String getLastName() {
+        return lastName;
     }
 
-    public void setApellidos(String apellidos) {
-        this.apellidos = apellidos;
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
-    public String getCodigo() {
-        return codigo;
+    public String getStudentCode() {
+        return studentCode;
     }
 
-    public void setCodigo(String codigo) {
-        this.codigo = codigo;
+    public void setStudentCode(String studentCode) {
+        this.studentCode = studentCode;
     }
 
-    public String getCorreo() {
-        return correo;
+    public String getEmail() {
+        return email;
     }
 
-    public void setCorreo(String correo) {
-        this.correo = correo;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getPassword() {
@@ -105,44 +116,44 @@ public class User {
         this.password = password;
     }
 
-    public boolean isActivo() {
-        return activo;
+    public boolean isActive() {
+        return active;
     }
 
-    public void setActivo(boolean activo) {
-        this.activo = activo;
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
-    public boolean isVerificado() {
-        return verificado;
+    public boolean isVerified() {
+        return verified;
     }
 
-    public void setVerificado(boolean verificado) {
-        this.verificado = verificado;
+    public void setVerified(boolean verified) {
+        this.verified = verified;
     }
 
-    public String getTokenVerificacion() {
-        return tokenVerificacion;
+    public String getVerificationToken() {
+        return verificationToken;
     }
 
-    public void setTokenVerificacion(String tokenVerificacion) {
-        this.tokenVerificacion = tokenVerificacion;
+    public void setVerificationToken(String verificationToken) {
+        this.verificationToken = verificationToken;
     }
 
-    public String getTokenReset() {
-        return tokenReset;
+    public String getResetToken() {
+        return resetToken;
     }
 
-    public void setTokenReset(String tokenReset) {
-        this.tokenReset = tokenReset;
+    public void setResetToken(String resetToken) {
+        this.resetToken = resetToken;
     }
 
-    public LocalDateTime getTokenResetExpira() {
-        return tokenResetExpira;
+    public LocalDateTime getResetTokenExpiresAt() {
+        return resetTokenExpiresAt;
     }
 
-    public void setTokenResetExpira(LocalDateTime tokenResetExpira) {
-        this.tokenResetExpira = tokenResetExpira;
+    public void setResetTokenExpiresAt(LocalDateTime resetTokenExpiresAt) {
+        this.resetTokenExpiresAt = resetTokenExpiresAt;
     }
 
     public int getTokenVersion() {
@@ -160,4 +171,78 @@ public class User {
     public void setRole(Role role) {
         this.role = role;
     }
+
+    // Spanish aliases for backward compatibility
+    public String getNombres() {
+        return getFirstName();
+    }
+
+    public void setNombres(String nombres) {
+        setFirstName(nombres);
+    }
+
+    public String getApellidos() {
+        return getLastName();
+    }
+
+    public void setApellidos(String apellidos) {
+        setLastName(apellidos);
+    }
+
+    public String getCodigo() {
+        return getStudentCode();
+    }
+
+    public void setCodigo(String codigo) {
+        setStudentCode(codigo);
+    }
+
+    public String getCorreo() {
+        return getEmail();
+    }
+
+    public void setCorreo(String correo) {
+        setEmail(correo);
+    }
+
+    public boolean isActivo() {
+        return isActive();
+    }
+
+    public void setActivo(boolean activo) {
+        setActive(activo);
+    }
+
+    public boolean isVerificado() {
+        return isVerified();
+    }
+
+    public void setVerificado(boolean verificado) {
+        setVerified(verificado);
+    }
+
+    public String getTokenVerificacion() {
+        return getVerificationToken();
+    }
+
+    public void setTokenVerificacion(String tokenVerificacion) {
+        setVerificationToken(tokenVerificacion);
+    }
+
+    public String getTokenReset() {
+        return getResetToken();
+    }
+
+    public void setTokenReset(String tokenReset) {
+        setResetToken(tokenReset);
+    }
+
+    public LocalDateTime getTokenResetExpira() {
+        return getResetTokenExpiresAt();
+    }
+
+    public void setTokenResetExpira(LocalDateTime tokenResetExpira) {
+        setResetTokenExpiresAt(tokenResetExpira);
+    }
 }
+

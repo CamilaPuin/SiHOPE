@@ -1,0 +1,1529 @@
+﻿diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/config/DataInitializer.java b/sihope/src/main/java/edu/uptc/swii/sihope/config/DataInitializer.java
+index 23e9f9a..1fa998a 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/config/DataInitializer.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/config/DataInitializer.java
+@@ -25,30 +25,30 @@ public class DataInitializer implements CommandLineRunner {
+ 
+     @Override
+     public void run(String... args) {
+-        crearSiNoExiste("Admin", "SiHope", "ADM-0001", "admin@uptc.edu.co", "Admin2026*", "ADMINISTRADOR");
+-        crearSiNoExiste("Coordinador", "SiHope", "COORD-0001", "coordinador@uptc.edu.co", "Coord2026*", "COORDINADOR");
+-        crearSiNoExiste("Monitor", "SiHope", "MON-0001", "monitor@uptc.edu.co", "Monitor2026*", "MONITOR");
+-        crearSiNoExiste("Estudiante", "SiHope", "202312345", "estudiante@uptc.edu.co", "Estudiante2026*", "ESTUDIANTE");
++        createIfMissing("Admin", "SiHope", "ADM-0001", "admin@uptc.edu.co", "Admin2026*", "ADMINISTRADOR");
++        createIfMissing("Coordinador", "SiHope", "COORD-0001", "coordinador@uptc.edu.co", "Coord2026*", "COORDINADOR");
++        createIfMissing("Monitor", "SiHope", "MON-0001", "monitor@uptc.edu.co", "Monitor2026*", "MONITOR");
++        createIfMissing("Estudiante", "SiHope", "202312345", "estudiante@uptc.edu.co", "Estudiante2026*", "ESTUDIANTE");
+     }
+ 
+-    private void crearSiNoExiste(String nombres, String apellidos, String codigo,
+-                                 String correo, String rawPassword, String nombreRol) {
++    private void createIfMissing(String nombres, String apellidos, String codigo,
++                                 String correo, String rawPassword, String roleName) {
+         if (userRepository.existsByCorreo(correo)) {
+             return;
+         }
+-        Role rol = roleRepository.findByNombre(nombreRol);
+-        if (rol == null) {
+-            rol = roleRepository.save(new Role(nombreRol));
++        Role role = roleRepository.findByNombre(roleName);
++        if (role == null) {
++            role = roleRepository.save(new Role(roleName));
+         }
+         User u = new User();
+         u.setNombres(nombres);
+         u.setApellidos(apellidos);
+         u.setCodigo(codigo);
+         u.setCorreo(correo);
+-        u.setPassword(userService.codificar(rawPassword));
++        u.setPassword(userService.encode(rawPassword));
+         u.setActivo(true);
+         u.setVerificado(true);
+-        u.setRole(rol);
++        u.setRole(role);
+         userRepository.save(u);
+     }
+ }
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/config/GlobalExceptionHandler.java b/sihope/src/main/java/edu/uptc/swii/sihope/config/GlobalExceptionHandler.java
+index 55a26df..59fc94d 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/config/GlobalExceptionHandler.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/config/GlobalExceptionHandler.java
+@@ -10,39 +10,29 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
+ 
+ import edu.uptc.swii.sihope.dto.response.ApiResponse;
+ 
+-/**
+- * Manejo centralizado de errores para toda la API REST. Traduce las excepciones
+- * a respuestas JSON con el envoltorio {@link ApiResponse} (nunca redirects ni vistas).
+- * La validaci├│n de negocio (mapas de error de UserService) la manejan los propios
+- * controladores; aqu├¡ se cubren fallos de la petici├│n y errores inesperados.
+- */
+ @RestControllerAdvice
+ public class GlobalExceptionHandler {
+ 
+-    /** Cuerpo JSON ausente o mal formado. */
+     @ExceptionHandler(HttpMessageNotReadableException.class)
+-    public ResponseEntity<ApiResponse<Void>> manejarJsonInvalido(HttpMessageNotReadableException ex) {
++    public ResponseEntity<ApiResponse<Void>> handleInvalidJson(HttpMessageNotReadableException ex) {
+         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                 .body(ApiResponse.error("El cuerpo de la petici├│n es inv├ílido o est├í mal formado."));
+     }
+ 
+-    /** Par├ímetro de ruta o query con tipo incorrecto (p. ej. id no num├®rico). */
+     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+-    public ResponseEntity<ApiResponse<Void>> manejarTipoInvalido(MethodArgumentTypeMismatchException ex) {
++    public ResponseEntity<ApiResponse<Void>> handleInvalidType(MethodArgumentTypeMismatchException ex) {
+         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                 .body(ApiResponse.error("El par├ímetro '" + ex.getName() + "' tiene un valor inv├ílido."));
+     }
+ 
+-    /** Cualquier error no controlado. */
+     @ExceptionHandler(Exception.class)
+-    public ResponseEntity<ApiResponse<Void>> manejarErrorInterno(Exception ex) {
++    public ResponseEntity<ApiResponse<Void>> handleInternalError(Exception ex) {
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                 .body(ApiResponse.error("Ocurri├│ un error interno. Intenta nuevamente m├ís tarde."));
+     }
+ 
+-    /** Recurso est├ítico no encontrado (p. ej. GET / sin index.html). */
+     @ExceptionHandler(NoResourceFoundException.class)
+-    public ResponseEntity<ApiResponse<Void>> manejarRecursoNoEncontrado(NoResourceFoundException ex) {
++    public ResponseEntity<ApiResponse<Void>> handleResourceNotFound(NoResourceFoundException ex) {
+         return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                 .body(ApiResponse.error("Recurso no encontrado."));
+     }
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/config/GmailConfig.java b/sihope/src/main/java/edu/uptc/swii/sihope/config/GmailConfig.java
+index 05e06b7..bec27a5 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/config/GmailConfig.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/config/GmailConfig.java
+@@ -11,17 +11,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+ import org.springframework.context.annotation.Bean;
+ import org.springframework.context.annotation.Configuration;
+ 
+-/**
+- * Configuraci├│n del cliente de la API de Gmail.
+- *
+- * <p>Publica un bean {@link Gmail} construido con credenciales OAuth2 de usuario
+- * (client id/secret + refresh token). La librer├¡a de Google renueva el access
+- * token autom├íticamente a partir del refresh token en cada env├¡o.
+- *
+- * <p>El bean es <b>condicional</b> a que exista {@code app.mail.gmail.refresh-token}:
+- * si no est├í configurado (p. ej. en desarrollo o CI), el bean no se crea y
+- * {@link edu.uptc.swii.sihope.service.EmailService} cae al modo simulado (log).
+- */
+ @Configuration
+ public class GmailConfig {
+ 
+@@ -32,9 +21,7 @@ public class GmailConfig {
+             @Value("${app.mail.gmail.client-secret}") String clientSecret,
+             @Value("${app.mail.gmail.refresh-token}") String refreshToken) throws Exception {
+ 
+-        // Los scopes concedidos (gmail.send) los determina el consentimiento original
+-        // asociado al refresh token; no hace falta re-declararlos aqu├¡.
+-        UserCredentials credenciales = UserCredentials.newBuilder()
++        UserCredentials credentials = UserCredentials.newBuilder()
+                 .setClientId(clientId)
+                 .setClientSecret(clientSecret)
+                 .setRefreshToken(refreshToken)
+@@ -43,7 +30,7 @@ public class GmailConfig {
+         return new Gmail.Builder(
+                 GoogleNetHttpTransport.newTrustedTransport(),
+                 GsonFactory.getDefaultInstance(),
+-                new HttpCredentialsAdapter(credenciales))
++                new HttpCredentialsAdapter(credentials))
+                 .setApplicationName("SiHope")
+                 .build();
+     }
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/config/JacksonConfig.java b/sihope/src/main/java/edu/uptc/swii/sihope/config/JacksonConfig.java
+index 12b9dc6..9ed3f93 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/config/JacksonConfig.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/config/JacksonConfig.java
+@@ -6,16 +6,6 @@ import org.springframework.context.annotation.Configuration;
+ import com.fasterxml.jackson.databind.ObjectMapper;
+ import com.fasterxml.jackson.databind.json.JsonMapper;
+ 
+-/**
+- * Expone un {@link ObjectMapper} como bean.
+- *
+- * <p>Con los starters modulares de Spring Boot 4 ({@code spring-boot-starter-webmvc}),
+- * la autoconfiguraci├│n de Jackson no siempre publica un {@code ObjectMapper} inyectable.
+- * {@link PostulacionService} lo necesita para serializar los campos parametrizables del
+- * formulario de postulaci├│n ({@code datos_json}), por lo que lo definimos expl├¡citamente.
+- * {@code findAndAddModules()} registra los m├│dulos disponibles en el classpath (p. ej.
+- * JSR-310 para fechas) para que la (de)serializaci├│n funcione en cualquier entorno.</p>
+- */
+ @Configuration
+ public class JacksonConfig {
+ 
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/config/JwtAuthInterceptor.java b/sihope/src/main/java/edu/uptc/swii/sihope/config/JwtAuthInterceptor.java
+index 74e4d9f..b32965e 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/config/JwtAuthInterceptor.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/config/JwtAuthInterceptor.java
+@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
+ import org.springframework.web.servlet.HandlerInterceptor;
+ 
+ import edu.uptc.swii.sihope.domain.User;
+-import edu.uptc.swii.sihope.dto.UsuarioAutenticado;
++import edu.uptc.swii.sihope.dto.AuthenticatedUser;
+ import edu.uptc.swii.sihope.repository.UserRepository;
+ import edu.uptc.swii.sihope.service.JwtService;
+ 
+@@ -18,22 +18,6 @@ import io.jsonwebtoken.JwtException;
+ import jakarta.servlet.http.HttpServletRequest;
+ import jakarta.servlet.http.HttpServletResponse;
+ 
+-/**
+- * Guarda de autenticaci├│n por JWT para la API REST (reemplaza al
+- * {@code SesionInterceptor} basado en HttpSession del Sprint 1).
+- *
+- * <p>Valida el {@code Authorization: Bearer <token>}, verifica la firma y la
+- * expiraci├│n, y confirma contra la base de datos que el usuario siga activo y que
+- * la versi├│n del token ({@code tv}) coincida con la actual. Este ├║ltimo control es
+- * la clave de la mitigaci├│n de HU_009: al promover a un aspirante (o cambiar su
+- * rol/estado) se incrementa {@code token_version}, dejando obsoleto cualquier token
+- * anterior y forzando un nuevo inicio de sesi├│n.
+- *
+- * <p>Adem├ís aplica autorizaci├│n por prefijo de ruta:
+- * {@code /api/admin/**}ÔåÆADMINISTRADOR, {@code /api/monitor/**}ÔåÆMONITOR,
+- * {@code /api/coordinador/**}ÔåÆCOORDINADOR. El resto de rutas protegidas solo
+- * requieren estar autenticado.
+- */
+ @Component
+ public class JwtAuthInterceptor implements HandlerInterceptor {
+ 
+@@ -51,23 +35,22 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
+     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+             throws Exception {
+ 
+-        // Dejar pasar el preflight CORS (el navegador no env├¡a cabeceras en OPTIONS).
+         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+             return true;
+         }
+ 
+-        String cabecera = request.getHeader("Authorization");
+-        if (cabecera == null || !cabecera.startsWith(BEARER)) {
+-            escribirError(response, HttpStatus.UNAUTHORIZED,
++        String header = request.getHeader("Authorization");
++        if (header == null || !header.startsWith(BEARER)) {
++            writeError(response, HttpStatus.UNAUTHORIZED,
+                     "Debes iniciar sesi├│n para acceder a este recurso.");
+             return false;
+         }
+ 
+         Claims claims;
+         try {
+-            claims = jwtService.validarYExtraer(cabecera.substring(BEARER.length()).trim());
++            claims = jwtService.parseAndValidate(header.substring(BEARER.length()).trim());
+         } catch (JwtException | IllegalArgumentException e) {
+-            escribirError(response, HttpStatus.UNAUTHORIZED,
++            writeError(response, HttpStatus.UNAUTHORIZED,
+                     "Tu sesi├│n expir├│ o no es v├ílida. Inicia sesi├│n de nuevo.");
+             return false;
+         }
+@@ -78,41 +61,40 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
+ 
+         if (opt.isEmpty() || !opt.get().isActivo()
+                 || tv == null || tv != opt.get().getTokenVersion()) {
+-            escribirError(response, HttpStatus.UNAUTHORIZED,
++            writeError(response, HttpStatus.UNAUTHORIZED,
+                     "Tu sesi├│n ya no es v├ílida. Vuelve a iniciar sesi├│n.");
+             return false;
+         }
+ 
+-        User usuario = opt.get();
+-        String rol = usuario.getRole() != null ? usuario.getRole().getNombre() : "";
++        User user = opt.get();
++        String role = user.getRole() != null ? user.getRole().getNombre() : "";
+ 
+-        String rolRequerido = rolRequeridoPara(request.getRequestURI());
+-        if (rolRequerido != null && !rolRequerido.equals(rol)) {
+-            escribirError(response, HttpStatus.FORBIDDEN,
++        String requiredRole = requiredRoleFor(request.getRequestURI());
++        if (requiredRole != null && !requiredRole.equals(role)) {
++            writeError(response, HttpStatus.FORBIDDEN,
+                     "No tienes permisos para acceder a este recurso.");
+             return false;
+         }
+ 
+-        request.setAttribute(UsuarioAutenticado.ATRIBUTO, new UsuarioAutenticado(
+-                usuario.getId(), usuario.getCorreo(), rol,
+-                claims.get(JwtService.CLAIM_NOMBRE, String.class),
+-                claims.get(JwtService.CLAIM_INICIALES, String.class)));
++        request.setAttribute(AuthenticatedUser.ATTRIBUTE, new AuthenticatedUser(
++                user.getId(), user.getCorreo(), role,
++                claims.get(JwtService.CLAIM_NAME, String.class),
++                claims.get(JwtService.CLAIM_INITIALS, String.class)));
+         return true;
+     }
+ 
+-    /** Rol exigido seg├║n el prefijo de la ruta, o {@code null} si basta con estar autenticado. */
+-    private String rolRequeridoPara(String uri) {
++    private String requiredRoleFor(String uri) {
+         if (uri.contains("/api/admin/"))       return "ADMINISTRADOR";
+         if (uri.contains("/api/coordinador/"))  return "COORDINADOR";
+         if (uri.contains("/api/monitor/"))      return "MONITOR";
+         return null;
+     }
+ 
+-    private void escribirError(HttpServletResponse response, HttpStatus status, String mensaje) throws Exception {
++    private void writeError(HttpServletResponse response, HttpStatus status, String message) throws Exception {
+         response.setStatus(status.value());
+         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+-        String json = "{\"success\":false,\"message\":\"" + mensaje + "\",\"data\":null}";
++        String json = "{\"success\":false,\"message\":\"" + message + "\",\"data\":null}";
+         response.getWriter().write(json);
+     }
+ }
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/config/OpenApiConfig.java b/sihope/src/main/java/edu/uptc/swii/sihope/config/OpenApiConfig.java
+index 1242811..38d2390 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/config/OpenApiConfig.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/config/OpenApiConfig.java
+@@ -9,14 +9,10 @@ import io.swagger.v3.oas.models.info.Info;
+ import io.swagger.v3.oas.models.security.SecurityRequirement;
+ import io.swagger.v3.oas.models.security.SecurityScheme;
+ 
+-/**
+- * Configuraci├│n de springdoc-openapi. Define la informaci├│n general de la API y el
+- * esquema de seguridad Bearer JWT para que Swagger UI permita enviar el token.
+- */
+ @Configuration
+ public class OpenApiConfig {
+ 
+-    private static final String ESQUEMA_JWT = "bearer-jwt";
++    private static final String JWT_SCHEME = "bearer-jwt";
+ 
+     @Bean
+     public OpenAPI sihopeOpenAPI() {
+@@ -27,8 +23,8 @@ public class OpenApiConfig {
+                         .description("API del programa de monitor├¡as acad├®micas de la UPTC. "
+                                 + "Autenticaci├│n por JWT: usa POST /api/auth/login y env├¡a el token como "
+                                 + "'Authorization: Bearer <token>'."))
+-                .addSecurityItem(new SecurityRequirement().addList(ESQUEMA_JWT))
+-                .components(new Components().addSecuritySchemes(ESQUEMA_JWT,
++                .addSecurityItem(new SecurityRequirement().addList(JWT_SCHEME))
++                .components(new Components().addSecuritySchemes(JWT_SCHEME,
+                         new SecurityScheme()
+                                 .type(SecurityScheme.Type.HTTP)
+                                 .scheme("bearer")
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/config/WebConfig.java b/sihope/src/main/java/edu/uptc/swii/sihope/config/WebConfig.java
+index 4b6069a..2ba02e2 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/config/WebConfig.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/config/WebConfig.java
+@@ -9,24 +9,19 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
+ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+ 
+-/**
+- * Configuraci├│n web: CORS, guarda de autenticaci├│n por JWT y resoluci├│n del
+- * argumento {@code UsuarioAutenticado} en los controllers.
+- */
+ @Configuration
+ public class WebConfig implements WebMvcConfigurer {
+ 
+-    /** Or├¡genes del frontend permitidos por CORS (lista separada por comas, configurable por entorno). */
+     @Value("${app.cors.allowed-origins}")
+     private String[] allowedOrigins;
+ 
+     private final JwtAuthInterceptor jwtAuthInterceptor;
+-    private final UsuarioArgumentResolver usuarioArgumentResolver;
++    private final UserArgumentResolver userArgumentResolver;
+ 
+     public WebConfig(JwtAuthInterceptor jwtAuthInterceptor,
+-                     UsuarioArgumentResolver usuarioArgumentResolver) {
++                     UserArgumentResolver userArgumentResolver) {
+         this.jwtAuthInterceptor = jwtAuthInterceptor;
+-        this.usuarioArgumentResolver = usuarioArgumentResolver;
++        this.userArgumentResolver = userArgumentResolver;
+     }
+ 
+     @Override
+@@ -45,7 +40,7 @@ public class WebConfig implements WebMvcConfigurer {
+ 
+     @Override
+     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
+-        resolvers.add(usuarioArgumentResolver);
++        resolvers.add(userArgumentResolver);
+     }
+ 
+     @Override
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/controller/LoginController.java b/sihope/src/main/java/edu/uptc/swii/sihope/controller/LoginController.java
+index 2334a75..1eaa7ec 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/controller/LoginController.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/controller/LoginController.java
+@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
+ import org.springframework.web.bind.annotation.RestController;
+ 
+ import edu.uptc.swii.sihope.domain.User;
+-import edu.uptc.swii.sihope.dto.UsuarioAutenticado;
+-import edu.uptc.swii.sihope.dto.UsuarioSesion;
++import edu.uptc.swii.sihope.dto.AuthenticatedUser;
++import edu.uptc.swii.sihope.dto.UserSession;
+ import edu.uptc.swii.sihope.dto.request.LoginRequest;
+ import edu.uptc.swii.sihope.dto.response.ApiResponse;
+ import edu.uptc.swii.sihope.dto.response.LoginResponse;
+@@ -40,42 +40,42 @@ public class LoginController {
+             description = "Valida las credenciales y devuelve un token JWT junto con los datos del usuario.")
+     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
+ 
+-        Optional<User> resultado = userService.autenticar(request.getCorreo(), request.getPassword());
++        Optional<User> result = userService.authenticate(request.getCorreo(), request.getPassword());
+ 
+-        if (resultado.isEmpty()) {
++        if (result.isEmpty()) {
+             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                     .body(ApiResponse.error("Correo o contrase├▒a incorrectos."));
+         }
+ 
+-        User usuario = resultado.get();
++        User user = result.get();
+ 
+-        if (!usuario.isVerificado()) {
++        if (!user.isVerificado()) {
+             return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                     .body(ApiResponse.error("La cuenta a├║n no ha sido verificada."));
+         }
+ 
+-        if (!usuario.isActivo()) {
++        if (!user.isActivo()) {
+             return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                     .body(ApiResponse.error("La cuenta est├í inactiva. Contacta al administrador."));
+         }
+ 
+-        String token = jwtService.generar(usuario);
+-        LoginResponse cuerpo = new LoginResponse(token, UsuarioSesion.desde(usuario));
++        String token = jwtService.generate(user);
++        LoginResponse body = new LoginResponse(token, UserSession.from(user));
+ 
+-        return ResponseEntity.ok(ApiResponse.ok("Inicio de sesi├│n exitoso.", cuerpo));
++        return ResponseEntity.ok(ApiResponse.ok("Inicio de sesi├│n exitoso.", body));
+     }
+ 
+     @GetMapping("/me")
+     @Operation(summary = "Sesi├│n actual",
+             description = "Devuelve el usuario asociado al token JWT enviado en el header Authorization.")
+-    public ResponseEntity<ApiResponse<UsuarioSesion>> me(UsuarioAutenticado autenticado) {
+-        if (autenticado == null) {
++    public ResponseEntity<ApiResponse<UserSession>> me(AuthenticatedUser authenticated) {
++        if (authenticated == null) {
+             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                     .body(ApiResponse.error("No hay una sesi├│n activa."));
+         }
+-        UsuarioSesion sesion = new UsuarioSesion(
+-                autenticado.nombre(), autenticado.iniciales(), autenticado.correo(), autenticado.rol());
+-        return ResponseEntity.ok(ApiResponse.ok("Sesi├│n activa.", sesion));
++        UserSession session = new UserSession(
++                authenticated.nombre(), authenticated.iniciales(), authenticated.correo(), authenticated.rol());
++        return ResponseEntity.ok(ApiResponse.ok("Sesi├│n activa.", session));
+     }
+ 
+     @PostMapping("/logout")
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/controller/MonitorController.java b/sihope/src/main/java/edu/uptc/swii/sihope/controller/MonitorController.java
+index e1643e0..aaaf39f 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/controller/MonitorController.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/controller/MonitorController.java
+@@ -10,50 +10,45 @@ import org.springframework.web.bind.annotation.PutMapping;
+ import org.springframework.web.bind.annotation.RequestBody;
+ import org.springframework.web.bind.annotation.RestController;
+ 
+-import edu.uptc.swii.sihope.dto.BloqueHorario;
+-import edu.uptc.swii.sihope.dto.UsuarioAutenticado;
+-import edu.uptc.swii.sihope.dto.request.DisponibilidadRequest;
++import edu.uptc.swii.sihope.dto.TimeBlock;
++import edu.uptc.swii.sihope.dto.AuthenticatedUser;
++import edu.uptc.swii.sihope.dto.request.AvailabilityRequest;
+ import edu.uptc.swii.sihope.dto.response.ApiResponse;
+-import edu.uptc.swii.sihope.dto.response.MonitorDirectorioResponse;
+-import edu.uptc.swii.sihope.service.DisponibilidadService;
++import edu.uptc.swii.sihope.dto.response.MonitorDirectoryResponse;
++import edu.uptc.swii.sihope.service.AvailabilityService;
+ 
+ import io.swagger.v3.oas.annotations.Operation;
+ import io.swagger.v3.oas.annotations.tags.Tag;
+ 
+-/**
+- * Endpoints de disponibilidad horaria del monitor (HU_006).
+- * Las rutas {@code /api/monitor/**} exigen el rol MONITOR (ver JwtAuthInterceptor);
+- * la lectura por id vive bajo {@code /api/monitores/**} (solo requiere sesi├│n).
+- */
+ @RestController
+ @Tag(name = "Disponibilidad del monitor",
+         description = "Gesti├│n de la matriz horaria semanal del monitor (HU_006).")
+ public class MonitorController {
+ 
+-    private final DisponibilidadService disponibilidadService;
++    private final AvailabilityService availabilityService;
+ 
+-    public MonitorController(DisponibilidadService disponibilidadService) {
+-        this.disponibilidadService = disponibilidadService;
++    public MonitorController(AvailabilityService availabilityService) {
++        this.availabilityService = availabilityService;
+     }
+ 
+     @GetMapping("/api/monitor/disponibilidad")
+     @Operation(summary = "Consultar mi disponibilidad",
+             description = "Devuelve las franjas horarias semanales del monitor autenticado.")
+-    public ResponseEntity<ApiResponse<List<BloqueHorario>>> miDisponibilidad(UsuarioAutenticado autenticado) {
+-        List<BloqueHorario> bloques = disponibilidadService.consultar(autenticado.id());
+-        return ResponseEntity.ok(ApiResponse.ok("Disponibilidad obtenida.", bloques));
++    public ResponseEntity<ApiResponse<List<TimeBlock>>> myAvailability(AuthenticatedUser authenticated) {
++        List<TimeBlock> blocks = availabilityService.getBlocks(authenticated.id());
++        return ResponseEntity.ok(ApiResponse.ok("Disponibilidad obtenida.", blocks));
+     }
+ 
+     @PutMapping("/api/monitor/disponibilidad")
+     @Operation(summary = "Actualizar mi disponibilidad",
+             description = "Reemplaza por completo la matriz horaria del monitor. Valida d├¡as (1-7), "
+                     + "formato de horas, inicio<fin y ausencia de solapes.")
+-    public ResponseEntity<ApiResponse<List<String>>> actualizar(@RequestBody DisponibilidadRequest request,
+-                                                                 UsuarioAutenticado autenticado) {
+-        List<String> errores = disponibilidadService.reemplazar(autenticado.id(), request.getBloques());
+-        if (!errores.isEmpty()) {
++    public ResponseEntity<ApiResponse<List<String>>> update(@RequestBody AvailabilityRequest request,
++                                                             AuthenticatedUser authenticated) {
++        List<String> errors = availabilityService.replace(authenticated.id(), request.getBloques());
++        if (!errors.isEmpty()) {
+             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+-                    .body(ApiResponse.error("No se pudo guardar la disponibilidad.", errores));
++                    .body(ApiResponse.error("No se pudo guardar la disponibilidad.", errors));
+         }
+         return ResponseEntity.ok(ApiResponse.ok("Disponibilidad actualizada correctamente."));
+     }
+@@ -62,16 +57,16 @@ public class MonitorController {
+     @Operation(summary = "Directorio de monitores",
+             description = "Lista los monitores con las franjas horarias que han marcado como "
+                     + "disponibles; visible para todos los roles autenticados.")
+-    public ResponseEntity<ApiResponse<List<MonitorDirectorioResponse>>> listarMonitores() {
++    public ResponseEntity<ApiResponse<List<MonitorDirectoryResponse>>> listMonitors() {
+         return ResponseEntity.ok(
+-                ApiResponse.ok("Monitores obtenidos.", disponibilidadService.listarMonitores()));
++                ApiResponse.ok("Monitores obtenidos.", availabilityService.listMonitors()));
+     }
+ 
+     @GetMapping("/api/monitores/{id}/disponibilidad")
+     @Operation(summary = "Ver la disponibilidad de un monitor",
+             description = "Devuelve solo las franjas marcadas por el monitor indicado (lectura para estudiantes).")
+-    public ResponseEntity<ApiResponse<List<BloqueHorario>>> disponibilidadDe(@PathVariable Integer id) {
+-        List<BloqueHorario> bloques = disponibilidadService.consultar(id);
+-        return ResponseEntity.ok(ApiResponse.ok("Disponibilidad obtenida.", bloques));
++    public ResponseEntity<ApiResponse<List<TimeBlock>>> availabilityOf(@PathVariable Integer id) {
++        List<TimeBlock> blocks = availabilityService.getBlocks(id);
++        return ResponseEntity.ok(ApiResponse.ok("Disponibilidad obtenida.", blocks));
+     }
+ }
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/controller/UserController.java b/sihope/src/main/java/edu/uptc/swii/sihope/controller/UserController.java
+index 37763b0..058e08b 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/controller/UserController.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/controller/UserController.java
+@@ -31,21 +31,21 @@ public class UserController {
+     }
+ 
+     @GetMapping
+-    public ResponseEntity<ApiResponse<List<UserResponse>>> listar() {
+-        List<UserResponse> usuarios = userService.listarUsuarios().stream()
+-                .map(UserResponse::desde)
++    public ResponseEntity<ApiResponse<List<UserResponse>>> list() {
++        List<UserResponse> users = userService.listUsers().stream()
++                .map(UserResponse::from)
+                 .toList();
+-        return ResponseEntity.ok(ApiResponse.ok("Usuarios obtenidos.", usuarios));
++        return ResponseEntity.ok(ApiResponse.ok("Usuarios obtenidos.", users));
+     }
+ 
+     @PostMapping
+-    public ResponseEntity<ApiResponse<Map<String, String>>> crear(@RequestBody CreateUserRequest request) {
+-        Map<String, String> errores = userService.crearUsuario(
++    public ResponseEntity<ApiResponse<Map<String, String>>> create(@RequestBody CreateUserRequest request) {
++        Map<String, String> errors = userService.createUser(
+                 request.getNombre(), request.getCorreo(), request.getDocumento(), request.getRol());
+ 
+-        if (!errores.isEmpty()) {
++        if (!errors.isEmpty()) {
+             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+-                    .body(ApiResponse.error("No se pudo crear el usuario.", errores));
++                    .body(ApiResponse.error("No se pudo crear el usuario.", errors));
+         }
+ 
+         return ResponseEntity.status(HttpStatus.CREATED)
+@@ -53,16 +53,16 @@ public class UserController {
+     }
+ 
+     @PutMapping("/{id}/rol")
+-    public ResponseEntity<ApiResponse<Void>> cambiarRol(@PathVariable Integer id,
++    public ResponseEntity<ApiResponse<Void>> changeRole(@PathVariable Integer id,
+                                                         @RequestBody ChangeRoleRequest request) {
+-        boolean ok = userService.cambiarRol(id, request.getRol());
++        boolean ok = userService.changeRole(id, request.getRol());
+         if (ok) {
+             return ResponseEntity.ok(ApiResponse.ok("Rol actualizado correctamente."));
+         }
+ 
+-        boolean existe = userService.listarUsuarios().stream()
++        boolean exists = userService.listUsers().stream()
+                 .anyMatch(u -> id.equals(u.getId()));
+-        if (!existe) {
++        if (!exists) {
+             return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                     .body(ApiResponse.error("El usuario no existe."));
+         }
+@@ -71,13 +71,13 @@ public class UserController {
+     }
+ 
+     @PatchMapping("/{id}/estado")
+-    public ResponseEntity<ApiResponse<Boolean>> cambiarEstado(@PathVariable Integer id) {
+-        Boolean nuevoEstado = userService.cambiarEstado(id);
+-        if (nuevoEstado == null) {
++    public ResponseEntity<ApiResponse<Boolean>> changeStatus(@PathVariable Integer id) {
++        Boolean newStatus = userService.changeStatus(id);
++        if (newStatus == null) {
+             return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                     .body(ApiResponse.error("El usuario no existe."));
+         }
+-        String mensaje = nuevoEstado ? "Cuenta activada." : "Cuenta desactivada.";
+-        return ResponseEntity.ok(ApiResponse.ok(mensaje, nuevoEstado));
++        String message = newStatus ? "Cuenta activada." : "Cuenta desactivada.";
++        return ResponseEntity.ok(ApiResponse.ok(message, newStatus));
+     }
+ }
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/domain/User.java b/sihope/src/main/java/edu/uptc/swii/sihope/domain/User.java
+index 4bf5f1d..fbfd1b9 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/domain/User.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/domain/User.java
+@@ -2,6 +2,7 @@ package edu.uptc.swii.sihope.domain;
+ 
+ import java.time.LocalDateTime;
+ 
++import com.fasterxml.jackson.annotation.JsonProperty;
+ import jakarta.persistence.Column;
+ import jakarta.persistence.Entity;
+ import jakarta.persistence.GeneratedValue;
+@@ -19,34 +20,44 @@ public class User {
+     @GeneratedValue(strategy = GenerationType.IDENTITY)
+     private Integer id;
+ 
+-    private String nombres;
++    @Column(name = "nombres")
++    @JsonProperty("nombres")
++    private String firstName;
+ 
+-    private String apellidos;
++    @Column(name = "apellidos")
++    @JsonProperty("apellidos")
++    private String lastName;
+ 
+-    private String codigo;
++    @Column(name = "codigo")
++    @JsonProperty("codigo")
++    private String studentCode;
+ 
+-    private String correo;
++    @Column(name = "correo")
++    @JsonProperty("correo")
++    private String email;
+ 
+     private String password;
+ 
+-    private boolean activo;
++    @Column(name = "activo")
++    @JsonProperty("activo")
++    private boolean active;
+ 
+-    private boolean verificado;
++    @Column(name = "verificado")
++    @JsonProperty("verificado")
++    private boolean verified;
+ 
+     @Column(name = "token_verificacion")
+-    private String tokenVerificacion;
++    @JsonProperty("tokenVerificacion")
++    private String verificationToken;
+ 
+     @Column(name = "token_reset")
+-    private String tokenReset;
++    @JsonProperty("tokenReset")
++    private String resetToken;
+ 
+     @Column(name = "token_reset_expira")
+-    private LocalDateTime tokenResetExpira;
++    @JsonProperty("tokenResetExpira")
++    private LocalDateTime resetTokenExpiresAt;
+ 
+-    /**
+-     * Versi├│n del token JWT. Cada JWT emitido incluye este valor; al cambiar el
+-     * rol, estado o contrase├▒a se incrementa, invalidando de inmediato cualquier
+-     * token previo (fuerza un nuevo inicio de sesi├│n).
+-     */
+     @Column(name = "token_version", nullable = false)
+     private int tokenVersion = 0;
+ 
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/ChangeRoleRequest.java b/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/ChangeRoleRequest.java
+index 30b5d31..8925751 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/ChangeRoleRequest.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/ChangeRoleRequest.java
+@@ -1,6 +1,5 @@
+ package edu.uptc.swii.sihope.dto.request;
+ 
+-/** Cambio de rol de un usuario (@RequestBody). */
+ public class ChangeRoleRequest {
+ 
+     private String rol;
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/CreateUserRequest.java b/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/CreateUserRequest.java
+index ebbfcf2..2c13126 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/CreateUserRequest.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/CreateUserRequest.java
+@@ -1,6 +1,5 @@
+ package edu.uptc.swii.sihope.dto.request;
+ 
+-/** Alta de usuario por parte de un administrador (@RequestBody). */
+ public class CreateUserRequest {
+ 
+     private String nombre;
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/LoginRequest.java b/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/LoginRequest.java
+index 38cbb4d..5bb5876 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/LoginRequest.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/LoginRequest.java
+@@ -1,6 +1,5 @@
+ package edu.uptc.swii.sihope.dto.request;
+ 
+-/** Datos de inicio de sesi├│n enviados desde React (@RequestBody). */
+ public class LoginRequest {
+ 
+     private String correo;
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/RecoverPasswordRequest.java b/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/RecoverPasswordRequest.java
+index 8085801..80d688b 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/RecoverPasswordRequest.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/RecoverPasswordRequest.java
+@@ -1,6 +1,5 @@
+ package edu.uptc.swii.sihope.dto.request;
+ 
+-/** Solicitud de recuperaci├│n de contrase├▒a por correo (@RequestBody). */
+ public class RecoverPasswordRequest {
+ 
+     private String correo;
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/RegisterRequest.java b/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/RegisterRequest.java
+index df861b8..5e8d3a4 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/RegisterRequest.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/RegisterRequest.java
+@@ -1,6 +1,5 @@
+ package edu.uptc.swii.sihope.dto.request;
+ 
+-/** Datos de auto-registro de un estudiante enviados desde React (@RequestBody). */
+ public class RegisterRequest {
+ 
+     private String nombres;
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/ResetPasswordRequest.java b/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/ResetPasswordRequest.java
+index fee6624..c22b6d8 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/ResetPasswordRequest.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/ResetPasswordRequest.java
+@@ -1,6 +1,5 @@
+ package edu.uptc.swii.sihope.dto.request;
+ 
+-/** Restablecimiento de contrase├▒a mediante token de recuperaci├│n (@RequestBody). */
+ public class ResetPasswordRequest {
+ 
+     private String token;
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/UpdatePasswordRequest.java b/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/UpdatePasswordRequest.java
+index 6fc9d0a..99fe73f 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/UpdatePasswordRequest.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/dto/request/UpdatePasswordRequest.java
+@@ -1,6 +1,5 @@
+ package edu.uptc.swii.sihope.dto.request;
+ 
+-/** Cambio de contrase├▒a de la cuenta autenticada (@RequestBody). */
+ public class UpdatePasswordRequest {
+ 
+     private String actual;
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/dto/response/ApiResponse.java b/sihope/src/main/java/edu/uptc/swii/sihope/dto/response/ApiResponse.java
+index b248ee8..7ad58c4 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/dto/response/ApiResponse.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/dto/response/ApiResponse.java
+@@ -1,9 +1,5 @@
+ package edu.uptc.swii.sihope.dto.response;
+ 
+-/**
+- * Envoltorio est├índar de todas las respuestas de la API REST.
+- * Estructura fija: { success, message, data } (regla 18).
+- */
+ public class ApiResponse<T> {
+ 
+     private boolean success;
+@@ -19,8 +15,6 @@ public class ApiResponse<T> {
+         this.data = data;
+     }
+ 
+-    // ---- Factor├¡as de conveniencia ----
+-
+     public static <T> ApiResponse<T> ok(String message, T data) {
+         return new ApiResponse<>(true, message, data);
+     }
+@@ -37,8 +31,6 @@ public class ApiResponse<T> {
+         return new ApiResponse<>(false, message, data);
+     }
+ 
+-    // ---- Getters / setters (necesarios para la serializaci├│n JSON) ----
+-
+     public boolean isSuccess() {
+         return success;
+     }
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/dto/response/LoginResponse.java b/sihope/src/main/java/edu/uptc/swii/sihope/dto/response/LoginResponse.java
+index 3d59501..1fd292b 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/dto/response/LoginResponse.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/dto/response/LoginResponse.java
+@@ -1,11 +1,6 @@
+ package edu.uptc.swii.sihope.dto.response;
+ 
+-import edu.uptc.swii.sihope.dto.UsuarioSesion;
++import edu.uptc.swii.sihope.dto.UserSession;
+ 
+-/**
+- * Respuesta del login: el token JWT que el frontend guarda y adjunta como
+- * {@code Authorization: Bearer}, junto con los datos del usuario para hidratar
+- * la sesi├│n sin una llamada adicional.
+- */
+-public record LoginResponse(String token, UsuarioSesion usuario) {
++public record LoginResponse(String token, UserSession usuario) {
+ }
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/dto/response/UserResponse.java b/sihope/src/main/java/edu/uptc/swii/sihope/dto/response/UserResponse.java
+index cb6fbaa..2db6634 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/dto/response/UserResponse.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/dto/response/UserResponse.java
+@@ -2,11 +2,6 @@ package edu.uptc.swii.sihope.dto.response;
+ 
+ import edu.uptc.swii.sihope.domain.User;
+ 
+-/**
+- * Vista de salida de un usuario para la API. Evita serializar la entidad JPA
+- * {@link User} directamente (no expone el hash BCrypt ni la relaci├│n perezosa Role).
+- * La entidad permanece intacta (regla 13).
+- */
+ public class UserResponse {
+ 
+     private Integer id;
+@@ -33,7 +28,7 @@ public class UserResponse {
+         this.rol = rol;
+     }
+ 
+-    public static UserResponse desde(User u) {
++    public static UserResponse from(User u) {
+         return new UserResponse(
+                 u.getId(),
+                 u.getNombres(),
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/repository/UserRepository.java b/sihope/src/main/java/edu/uptc/swii/sihope/repository/UserRepository.java
+index 5c7b3e5..27d03dd 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/repository/UserRepository.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/repository/UserRepository.java
+@@ -21,6 +21,5 @@ public interface UserRepository extends JpaRepository<User, Integer> {
+ 
+     List<User> findAllByOrderByIdAsc();
+ 
+-    /** Monitores del directorio (usuarios con rol MONITOR), ordenados por nombre. */
+     List<User> findByRole_NombreOrderByNombresAscApellidosAsc(String nombreRol);
+ }
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/service/EmailService.java b/sihope/src/main/java/edu/uptc/swii/sihope/service/EmailService.java
+index 0960132..d89de99 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/service/EmailService.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/service/EmailService.java
+@@ -18,117 +18,103 @@ import java.nio.charset.StandardCharsets;
+ import java.util.Base64;
+ import java.util.Properties;
+ 
+-/**
+- * Env├¡o de correos transaccionales de SiHope (verificaci├│n de cuenta, credenciales
+- * de acceso y recuperaci├│n de contrase├▒a) a trav├®s de la API de Gmail.
+- *
+- * <p>Si el cliente {@link Gmail} no est├í configurado (falta el refresh token) o el
+- * env├¡o falla, el servicio cae a un modo <b>simulado</b> que registra el correo en
+- * el log, de modo que el registro/recuperaci├│n nunca se rompen por un fallo de correo.
+- */
+ @Service
+ public class EmailService {
+ 
+     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+ 
+-    /** Cliente Gmail (puede ser null si no hay credenciales: ver GmailConfig). */
+     private final ObjectProvider<Gmail> gmailProvider;
+     private final String baseUrl;
+-    private final String remitente;
++    private final String sender;
+ 
+     public EmailService(ObjectProvider<Gmail> gmailProvider,
+                         @Value("${app.frontend.base-url}") String baseUrl,
+-                        @Value("${app.mail.from:}") String remitente) {
++                        @Value("${app.mail.from:}") String sender) {
+         this.gmailProvider = gmailProvider;
+         this.baseUrl = baseUrl;
+-        this.remitente = remitente;
++        this.sender = sender;
+     }
+ 
+-    public void enviarVerificacion(String correo, String token) {
+-        String enlace = baseUrl + "/verificar?token=" + token;
+-        String cuerpo = """
++    public void sendVerification(String correo, String token) {
++        String link = baseUrl + "/verificar?token=" + token;
++        String body = """
+                 <p>Bienvenido a <strong>SiHope</strong>.</p>
+                 <p>Activa tu cuenta ingresando al siguiente enlace:</p>
+                 <p><a href="%s">Activar mi cuenta</a></p>
+                 <p>Si no creaste esta cuenta, ignora este correo.</p>
+-                """.formatted(enlace);
+-        enviar(correo, "Activa tu cuenta de SiHope", cuerpo,
+-                "Verificaci├│n de cuenta", "Activa tu cuenta ingresando a:\n  " + enlace);
++                """.formatted(link);
++        send(correo, "Activa tu cuenta de SiHope", body,
++                "Verificaci├│n de cuenta", "Activa tu cuenta ingresando a:\n  " + link);
+     }
+ 
+-    public void enviarCredenciales(String correo, String passwordTemporal) {
+-        String cuerpo = """
++    public void sendCredentials(String correo, String temporaryPassword) {
++        String body = """
+                 <p>Se cre├│ tu cuenta en <strong>SiHope</strong>.</p>
+                 <ul>
+                   <li><strong>Usuario:</strong> %s</li>
+                   <li><strong>Contrase├▒a temporal:</strong> %s</li>
+                 </ul>
+                 <p>C├ímbiala tras tu primer inicio de sesi├│n.</p>
+-                """.formatted(correo, passwordTemporal);
+-        enviar(correo, "Tu cuenta de SiHope est├í lista", cuerpo,
++                """.formatted(correo, temporaryPassword);
++        send(correo, "Tu cuenta de SiHope est├í lista", body,
+                 "Credenciales de acceso",
+-                "Usuario: " + correo + "\n  Contrase├▒a temporal: " + passwordTemporal
++                "Usuario: " + correo + "\n  Contrase├▒a temporal: " + temporaryPassword
+                         + "\n  C├ímbiala tras tu primer inicio de sesi├│n.");
+     }
+ 
+-    public void enviarRecuperacion(String correo, String token) {
+-        String enlace = baseUrl + "/restablecer?token=" + token;
+-        String cuerpo = """
++    public void sendPasswordReset(String correo, String token) {
++        String link = baseUrl + "/restablecer?token=" + token;
++        String body = """
+                 <p>Solicitaste restablecer tu contrase├▒a de <strong>SiHope</strong>.</p>
+                 <p>El siguiente enlace vence en 30 minutos:</p>
+                 <p><a href="%s">Restablecer mi contrase├▒a</a></p>
+                 <p>Si no lo solicitaste, ignora este correo.</p>
+-                """.formatted(enlace);
+-        enviar(correo, "Restablece tu contrase├▒a de SiHope", cuerpo,
++                """.formatted(link);
++        send(correo, "Restablece tu contrase├▒a de SiHope", body,
+                 "Recuperaci├│n de contrase├▒a",
+-                "Solicitaste restablecer tu contrase├▒a. El enlace vence en 30 minutos:\n  " + enlace);
++                "Solicitaste restablecer tu contrase├▒a. El enlace vence en 30 minutos:\n  " + link);
+     }
+ 
+-    /**
+-     * Intenta enviar el correo por la API de Gmail. Si el cliente no est├í disponible
+-     * o el env├¡o falla, registra el correo en el log (modo simulado) para no bloquear
+-     * el flujo de negocio.
+-     */
+-    private void enviar(String destino, String asunto, String cuerpoHtml,
+-                        String tipoSimulado, String cuerpoSimulado) {
++    private void send(String recipient, String subject, String htmlBody,
++                      String simulatedType, String simulatedBody) {
+         Gmail gmail = gmailProvider.getIfAvailable();
+         if (gmail == null) {
+-            simular(tipoSimulado, destino, asunto, cuerpoSimulado);
++            simulate(simulatedType, recipient, subject, simulatedBody);
+             return;
+         }
+         try {
+-            MimeMessage mime = construirMime(destino, asunto, cuerpoHtml);
++            MimeMessage mime = buildMime(recipient, subject, htmlBody);
+             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+             mime.writeTo(buffer);
+             String raw = Base64.getUrlEncoder().encodeToString(buffer.toByteArray());
+ 
+-            Message mensaje = new Message().setRaw(raw);
+-            gmail.users().messages().send("me", mensaje).execute();
+-            log.info("Correo enviado a {} v├¡a API de Gmail (asunto: {})", destino, asunto);
++            Message message = new Message().setRaw(raw);
++            gmail.users().messages().send("me", message).execute();
++            log.info("Correo enviado a {} v├¡a API de Gmail (asunto: {})", recipient, subject);
+         } catch (Exception e) {
+             log.error("Fallo al enviar correo a {} v├¡a API de Gmail; se registra en modo simulado. Causa: {}",
+-                    destino, e.getMessage(), e);
+-            simular(tipoSimulado, destino, asunto, cuerpoSimulado);
++                    recipient, e.getMessage(), e);
++            simulate(simulatedType, recipient, subject, simulatedBody);
+         }
+     }
+ 
+-    private MimeMessage construirMime(String destino, String asunto, String cuerpoHtml) throws Exception {
++    private MimeMessage buildMime(String recipient, String subject, String htmlBody) throws Exception {
+         MimeMessage mime = new MimeMessage(Session.getInstance(new Properties()));
+-        if (remitente != null && !remitente.isBlank()) {
+-            mime.setFrom(new InternetAddress(remitente));
++        if (sender != null && !sender.isBlank()) {
++            mime.setFrom(new InternetAddress(sender));
+         }
+-        mime.addRecipient(MimeMessage.RecipientType.TO, new InternetAddress(destino));
+-        mime.setSubject(asunto, StandardCharsets.UTF_8.name());
+-        mime.setText(cuerpoHtml, StandardCharsets.UTF_8.name(), "html");
++        mime.addRecipient(MimeMessage.RecipientType.TO, new InternetAddress(recipient));
++        mime.setSubject(subject, StandardCharsets.UTF_8.name());
++        mime.setText(htmlBody, StandardCharsets.UTF_8.name(), "html");
+         return mime;
+     }
+ 
+-    private void simular(String tipo, String correo, String asunto, String cuerpo) {
++    private void simulate(String type, String correo, String subject, String body) {
+         log.info("\n CORREO SIMULADO {} \n" +
+                 "Para: {}\n" +
+                 "Asunto: {}\n" +
+                 "Cuerpo: {}\n" +
+                 "-----------------------------------",
+-                tipo, correo, asunto, cuerpo);
++                type, correo, subject, body);
+     }
+ }
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/service/JwtService.java b/sihope/src/main/java/edu/uptc/swii/sihope/service/JwtService.java
+index b4a2444..4fae9e3 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/service/JwtService.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/service/JwtService.java
+@@ -15,71 +15,56 @@ import io.jsonwebtoken.JwtException;
+ import io.jsonwebtoken.Jwts;
+ import io.jsonwebtoken.security.Keys;
+ 
+-/**
+- * Generaci├│n y validaci├│n de JSON Web Tokens (JWT) con firma HMAC-SHA256.
+- *
+- * <p>El token es la ├║nica fuente de autenticaci├│n de la API (stateless): sustituye
+- * a la HttpSession del Sprint 1. Cada token transporta los datos de la sesi├│n como
+- * <em>claims</em> ({@code correo}, {@code rol}, {@code nombre}, {@code iniciales}) y
+- * una versi├│n ({@code tv}) que permite invalidarlo de inmediato al cambiar el rol,
+- * el estado o la contrase├▒a del usuario (ver {@code token_version} en {@link User}).
+- */
+ @Service
+ public class JwtService {
+ 
+     public static final String CLAIM_ID = "id";
+-    public static final String CLAIM_ROL = "rol";
+-    public static final String CLAIM_NOMBRE = "nombre";
+-    public static final String CLAIM_INICIALES = "iniciales";
++    public static final String CLAIM_ROLE = "rol";
++    public static final String CLAIM_NAME = "nombre";
++    public static final String CLAIM_INITIALS = "iniciales";
+     public static final String CLAIM_TOKEN_VERSION = "tv";
+ 
+-    private final SecretKey clave;
+-    private final long expiracionMs;
++    private final SecretKey key;
++    private final long expirationMs;
+ 
+     public JwtService(@Value("${app.jwt.secret}") String secret,
+-                      @Value("${app.jwt.expiration-ms}") long expiracionMs) {
+-        this.clave = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+-        this.expiracionMs = expiracionMs;
++                      @Value("${app.jwt.expiration-ms}") long expirationMs) {
++        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
++        this.expirationMs = expirationMs;
+     }
+ 
+-    /** Emite un token firmado para el usuario indicado. */
+-    public String generar(User u) {
+-        String nombre = (nvl(u.getNombres()) + " " + nvl(u.getApellidos())).trim();
+-        String iniciales = (inicial(u.getNombres()) + inicial(u.getApellidos())).toUpperCase();
+-        String rol = u.getRole() != null ? u.getRole().getNombre() : "";
+-        Date ahora = new Date();
++    public String generate(User u) {
++        String name = (nullToEmpty(u.getNombres()) + " " + nullToEmpty(u.getApellidos())).trim();
++        String initials = (initial(u.getNombres()) + initial(u.getApellidos())).toUpperCase();
++        String role = u.getRole() != null ? u.getRole().getNombre() : "";
++        Date now = new Date();
+ 
+         return Jwts.builder()
+                 .subject(u.getCorreo())
+                 .claim(CLAIM_ID, u.getId())
+-                .claim(CLAIM_ROL, rol)
+-                .claim(CLAIM_NOMBRE, nombre)
+-                .claim(CLAIM_INICIALES, iniciales)
++                .claim(CLAIM_ROLE, role)
++                .claim(CLAIM_NAME, name)
++                .claim(CLAIM_INITIALS, initials)
+                 .claim(CLAIM_TOKEN_VERSION, u.getTokenVersion())
+-                .issuedAt(ahora)
+-                .expiration(new Date(ahora.getTime() + expiracionMs))
+-                .signWith(clave)
++                .issuedAt(now)
++                .expiration(new Date(now.getTime() + expirationMs))
++                .signWith(key)
+                 .compact();
+     }
+ 
+-    /**
+-     * Valida la firma y la expiraci├│n del token y devuelve sus claims.
+-     *
+-     * @throws JwtException si el token es inv├ílido, est├í manipulado o expir├│.
+-     */
+-    public Claims validarYExtraer(String token) throws JwtException {
++    public Claims parseAndValidate(String token) throws JwtException {
+         return Jwts.parser()
+-                .verifyWith(clave)
++                .verifyWith(key)
+                 .build()
+                 .parseSignedClaims(token)
+                 .getPayload();
+     }
+ 
+-    private static String nvl(String s) {
++    private static String nullToEmpty(String s) {
+         return s == null ? "" : s;
+     }
+ 
+-    private static String inicial(String s) {
++    private static String initial(String s) {
+         return (s == null || s.isBlank()) ? "" : s.substring(0, 1);
+     }
+ }
+diff --git a/sihope/src/main/java/edu/uptc/swii/sihope/service/UserService.java b/sihope/src/main/java/edu/uptc/swii/sihope/service/UserService.java
+index e5dfc8c..a38cfd4 100644
+--- a/sihope/src/main/java/edu/uptc/swii/sihope/service/UserService.java
++++ b/sihope/src/main/java/edu/uptc/swii/sihope/service/UserService.java
+@@ -12,42 +12,42 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+ import org.springframework.security.crypto.password.PasswordEncoder;
+ import org.springframework.stereotype.Service;
+ 
+-import edu.uptc.swii.sihope.domain.Historial;
+-import edu.uptc.swii.sihope.domain.Postulacion;
++import edu.uptc.swii.sihope.domain.History;
++import edu.uptc.swii.sihope.domain.Application;
+ import edu.uptc.swii.sihope.domain.Role;
+ import edu.uptc.swii.sihope.domain.User;
+ import edu.uptc.swii.sihope.dto.UserDTO;
+-import edu.uptc.swii.sihope.repository.HistorialRepository;
+-import edu.uptc.swii.sihope.repository.PostulacionRepository;
++import edu.uptc.swii.sihope.repository.HistoryRepository;
++import edu.uptc.swii.sihope.repository.ApplicationRepository;
+ import edu.uptc.swii.sihope.repository.RoleRepository;
+ import edu.uptc.swii.sihope.repository.UserRepository;
+ 
+ @Service
+ public class UserService {
+ 
+-    public static final String DOMINIO_UPTC = "@uptc.edu.co";
+-    private static final List<String> ROLES_VALIDOS =
++    public static final String UPTC_DOMAIN = "@uptc.edu.co";
++    private static final List<String> VALID_ROLES =
+             List.of("ADMINISTRADOR", "COORDINADOR", "MONITOR", "ESTUDIANTE");
+-    private static final int VIGENCIA_RESET_MIN = 30;
++    private static final int RESET_VALIDITY_MIN = 30;
+ 
+     private final UserRepository userRepository;
+     private final RoleRepository roleRepository;
+-    private final HistorialRepository historialRepository;
+-    private final PostulacionRepository postulacionRepository;
++    private final HistoryRepository historyRepository;
++    private final ApplicationRepository applicationRepository;
+     private final EmailService emailService;
+     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+ 
+     public UserService(UserRepository userRepository, RoleRepository roleRepository,
+-                       HistorialRepository historialRepository,
+-                       PostulacionRepository postulacionRepository, EmailService emailService) {
++                       HistoryRepository historyRepository,
++                       ApplicationRepository applicationRepository, EmailService emailService) {
+         this.userRepository = userRepository;
+         this.roleRepository = roleRepository;
+-        this.historialRepository = historialRepository;
+-        this.postulacionRepository = postulacionRepository;
++        this.historyRepository = historyRepository;
++        this.applicationRepository = applicationRepository;
+         this.emailService = emailService;
+     }
+ 
+-    public Optional<User> autenticar(String correo, String rawPassword) {
++    public Optional<User> authenticate(String correo, String rawPassword) {
+         if (correo == null || rawPassword == null) {
+             return Optional.empty();
+         }
+@@ -55,7 +55,7 @@ public class UserService {
+                 .filter(u -> passwordEncoder.matches(rawPassword, u.getPassword()));
+     }
+ 
+-    public String rutaPorRol(String rol) {
++    public String routeByRole(String rol) {
+         if (rol == null) {
+             return "/login";
+         }
+@@ -68,60 +68,60 @@ public class UserService {
+         };
+     }
+ 
+-    public String codificar(String rawPassword) {
++    public String encode(String rawPassword) {
+         return passwordEncoder.encode(rawPassword);
+     }
+ 
+-    public List<String> requisitosFaltantes(String pwd) {
+-        List<String> faltan = new ArrayList<>();
++    public List<String> missingRequirements(String pwd) {
++        List<String> missing = new ArrayList<>();
+         if (pwd == null) pwd = "";
+-        if (pwd.length() < 8)             faltan.add("M├¡nimo 8 caracteres");
+-        if (!pwd.matches(".*[A-Z].*"))    faltan.add("Una letra may├║scula");
+-        if (!pwd.matches(".*[a-z].*"))    faltan.add("Una letra min├║scula");
+-        if (!pwd.matches(".*\\d.*"))      faltan.add("Un n├║mero");
+-        if (!pwd.matches(".*[^A-Za-z0-9].*")) faltan.add("Un car├ícter especial");
+-        return faltan;
++        if (pwd.length() < 8)             missing.add("M├¡nimo 8 caracteres");
++        if (!pwd.matches(".*[A-Z].*"))    missing.add("Una letra may├║scula");
++        if (!pwd.matches(".*[a-z].*"))    missing.add("Una letra min├║scula");
++        if (!pwd.matches(".*\\d.*"))      missing.add("Un n├║mero");
++        if (!pwd.matches(".*[^A-Za-z0-9].*")) missing.add("Un car├ícter especial");
++        return missing;
+     }
+ 
+-    private boolean contrasenaValida(String pwd) {
+-        return requisitosFaltantes(pwd).isEmpty();
++    private boolean isPasswordValid(String pwd) {
++        return missingRequirements(pwd).isEmpty();
+     }
+ 
+-    private boolean correoInstitucional(String correo) {
+-        return correo != null && correo.trim().toLowerCase().endsWith(DOMINIO_UPTC)
+-                && correo.trim().length() > DOMINIO_UPTC.length();
++    private boolean isInstitutionalEmail(String correo) {
++        return correo != null && correo.trim().toLowerCase().endsWith(UPTC_DOMAIN)
++                && correo.trim().length() > UPTC_DOMAIN.length();
+     }
+ 
+-    public Map<String, String> registrarEstudiante(UserDTO dto) {
+-        Map<String, String> errores = new LinkedHashMap<>();
++    public Map<String, String> registerStudent(UserDTO dto) {
++        Map<String, String> errors = new LinkedHashMap<>();
+ 
+-        if (esVacio(dto.getNombres()))   errores.put("nombres", "Ingresa tus nombres.");
+-        if (esVacio(dto.getApellidos())) errores.put("apellidos", "Ingresa tus apellidos.");
++        if (isBlank(dto.getNombres()))   errors.put("nombres", "Ingresa tus nombres.");
++        if (isBlank(dto.getApellidos())) errors.put("apellidos", "Ingresa tus apellidos.");
+ 
+-        if (esVacio(dto.getCodigo())) {
+-            errores.put("codigo", "El c├│digo estudiantil es obligatorio.");
++        if (isBlank(dto.getCodigo())) {
++            errors.put("codigo", "El c├│digo estudiantil es obligatorio.");
+         } else if (userRepository.existsByCodigo(dto.getCodigo().trim())) {
+-            errores.put("codigo", "El c├│digo estudiantil ya est├í registrado.");
++            errors.put("codigo", "El c├│digo estudiantil ya est├í registrado.");
+         }
+ 
+-        if (!correoInstitucional(dto.getCorreo())) {
+-            errores.put("correo", "Debes usar un correo institucional de la UPTC (" + DOMINIO_UPTC + ").");
++        if (!isInstitutionalEmail(dto.getCorreo())) {
++            errors.put("correo", "Debes usar un correo institucional de la UPTC (" + UPTC_DOMAIN + ").");
+         } else if (userRepository.existsByCorreo(dto.getCorreo().trim())) {
+-            errores.put("correo", "Este correo ya tiene una cuenta registrada.");
++            errors.put("correo", "Este correo ya tiene una cuenta registrada.");
+         }
+ 
+-        if (!contrasenaValida(dto.getPassword())) {
+-            errores.put("password", "La contrase├▒a no cumple los requisitos de seguridad.");
++        if (!isPasswordValid(dto.getPassword())) {
++            errors.put("password", "La contrase├▒a no cumple los requisitos de seguridad.");
+         }
+         if (dto.getPassword() != null && !dto.getPassword().equals(dto.getPassword2())) {
+-            errores.put("password2", "Las contrase├▒as no coinciden.");
++            errors.put("password2", "Las contrase├▒as no coinciden.");
+         }
+ 
+-        if (!errores.isEmpty()) {
+-            return errores;
++        if (!errors.isEmpty()) {
++            return errors;
+         }
+ 
+-        Role rolEstudiante = obtenerRol("ESTUDIANTE");
++        Role studentRole = getOrCreateRole("ESTUDIANTE");
+         String token = UUID.randomUUID().toString();
+ 
+         User u = new User();
+@@ -129,18 +129,18 @@ public class UserService {
+         u.setApellidos(dto.getApellidos().trim());
+         u.setCodigo(dto.getCodigo().trim());
+         u.setCorreo(dto.getCorreo().trim());
+-        u.setPassword(codificar(dto.getPassword()));
++        u.setPassword(encode(dto.getPassword()));
+         u.setActivo(true);
+         u.setVerificado(false);
+         u.setTokenVerificacion(token);
+-        u.setRole(rolEstudiante);
++        u.setRole(studentRole);
+         userRepository.save(u);
+ 
+-        emailService.enviarVerificacion(u.getCorreo(), token);
+-        return errores;
++        emailService.sendVerification(u.getCorreo(), token);
++        return errors;
+     }
+ 
+-    public boolean verificarCuenta(String token) {
++    public boolean verifyAccount(String token) {
+         Optional<User> opt = userRepository.findByTokenVerificacion(token);
+         if (opt.isEmpty()) {
+             return false;
+@@ -152,185 +152,176 @@ public class UserService {
+         return true;
+     }
+ 
+-    public List<User> listarUsuarios() {
++    public List<User> listUsers() {
+         return userRepository.findAllByOrderByIdAsc();
+     }
+ 
+-    public Map<String, String> crearUsuario(String nombreCompleto, String correo,
+-                                             String codigo, String rolNombre) {
+-        Map<String, String> errores = new LinkedHashMap<>();
++    public Map<String, String> createUser(String fullName, String correo,
++                                           String codigo, String roleName) {
++        Map<String, String> errors = new LinkedHashMap<>();
+ 
+-        if (esVacio(nombreCompleto)) errores.put("nombre", "El nombre es obligatorio.");
+-        if (esVacio(codigo))         errores.put("documento", "El documento/c├│digo es obligatorio.");
++        if (isBlank(fullName)) errors.put("nombre", "El nombre es obligatorio.");
++        if (isBlank(codigo))   errors.put("documento", "El documento/c├│digo es obligatorio.");
+ 
+-        if (!correoInstitucional(correo)) {
+-            errores.put("correo", "Ingresa un correo institucional v├ílido (" + DOMINIO_UPTC + ").");
++        if (!isInstitutionalEmail(correo)) {
++            errors.put("correo", "Ingresa un correo institucional v├ílido (" + UPTC_DOMAIN + ").");
+         } else if (userRepository.existsByCorreo(correo.trim())) {
+-            errores.put("correo", "Ya existe un usuario con ese correo.");
++            errors.put("correo", "Ya existe un usuario con ese correo.");
+         }
+ 
+-        if (esVacio(rolNombre) || !ROLES_VALIDOS.contains(rolNombre)) {
+-            errores.put("rol", "Selecciona un rol v├ílido.");
++        if (isBlank(roleName) || !VALID_ROLES.contains(roleName)) {
++            errors.put("rol", "Selecciona un rol v├ílido.");
+         }
+-        if (!esVacio(codigo) && userRepository.existsByCodigo(codigo.trim())) {
+-            errores.put("documento", "Ya existe un usuario con ese documento/c├│digo.");
++        if (!isBlank(codigo) && userRepository.existsByCodigo(codigo.trim())) {
++            errors.put("documento", "Ya existe un usuario con ese documento/c├│digo.");
+         }
+ 
+-        if (!errores.isEmpty()) {
+-            return errores;
++        if (!errors.isEmpty()) {
++            return errors;
+         }
+ 
+-        String[] partes = nombreCompleto.trim().split("\\s+", 2);
+-        String passwordTemporal = generarPasswordTemporal();
++        String[] parts = fullName.trim().split("\\s+", 2);
++        String temporaryPassword = generateTemporaryPassword();
+ 
+         User u = new User();
+-        u.setNombres(partes[0]);
+-        u.setApellidos(partes.length > 1 ? partes[1] : "");
++        u.setNombres(parts[0]);
++        u.setApellidos(parts.length > 1 ? parts[1] : "");
+         u.setCodigo(codigo.trim());
+         u.setCorreo(correo.trim());
+-        u.setPassword(codificar(passwordTemporal));
++        u.setPassword(encode(temporaryPassword));
+         u.setActivo(true);
+         u.setVerificado(true);
+-        u.setRole(obtenerRol(rolNombre));
++        u.setRole(getOrCreateRole(roleName));
+         userRepository.save(u);
+ 
+-        emailService.enviarCredenciales(u.getCorreo(), passwordTemporal);
+-        return errores;
++        emailService.sendCredentials(u.getCorreo(), temporaryPassword);
++        return errors;
+     }
+ 
+-    public boolean cambiarRol(Integer usuarioId, String rolNombre) {
+-        Optional<User> opt = userRepository.findById(usuarioId);
+-        if (opt.isEmpty() || esVacio(rolNombre) || !ROLES_VALIDOS.contains(rolNombre)) {
++    public boolean changeRole(Integer userId, String roleName) {
++        Optional<User> opt = userRepository.findById(userId);
++        if (opt.isEmpty() || isBlank(roleName) || !VALID_ROLES.contains(roleName)) {
+             return false;
+         }
+         User u = opt.get();
+-        String rolAnterior = u.getRole() != null ? u.getRole().getNombre() : "ÔÇö";
+-        u.setRole(obtenerRol(rolNombre));
+-        u.setTokenVersion(u.getTokenVersion() + 1); // invalida los JWT vigentes tras el cambio de rol
++        String previousRole = u.getRole() != null ? u.getRole().getNombre() : "ÔÇö";
++        u.setRole(getOrCreateRole(roleName));
++        u.setTokenVersion(u.getTokenVersion() + 1);
+         userRepository.save(u);
+-        registrar(u, Historial.CAMBIO_ROL, "Rol cambiado de " + rolAnterior + " a " + rolNombre);
++        logHistory(u, History.CAMBIO_ROL, "Rol cambiado de " + previousRole + " a " + roleName);
+         return true;
+     }
+ 
+-    public Boolean cambiarEstado(Integer usuarioId) {
+-        Optional<User> opt = userRepository.findById(usuarioId);
++    public Boolean changeStatus(Integer userId) {
++        Optional<User> opt = userRepository.findById(userId);
+         if (opt.isEmpty()) {
+             return null;
+         }
+         User u = opt.get();
+         u.setActivo(!u.isActivo());
+-        u.setTokenVersion(u.getTokenVersion() + 1); // invalida los JWT vigentes tras el cambio de estado
++        u.setTokenVersion(u.getTokenVersion() + 1);
+         userRepository.save(u);
+-        registrar(u, Historial.ESTADO_CUENTA, u.isActivo() ? "Cuenta activada" : "Cuenta desactivada");
++        logHistory(u, History.ESTADO_CUENTA, u.isActivo() ? "Cuenta activada" : "Cuenta desactivada");
+         return u.isActivo();
+     }
+ 
+-    /** Resultado de la promoci├│n de un aspirante a monitor (HU_009). */
+-    public enum ResultadoPromocion { OK, NO_EXISTE, NO_APROBADO, YA_ES_MONITOR }
+-
+-    /**
+-     * Promueve a MONITOR a un aspirante aprobado (HU_009).
+-     *
+-     * <p>Solo procede si el usuario tiene al menos una postulaci├│n en estado
+-     * APROBADA (mitigaci├│n 4.2). Al cambiar el rol incrementa {@code tokenVersion},
+-     * invalidando de inmediato cualquier JWT vigente del usuario para forzar un
+-     * nuevo inicio de sesi├│n con los permisos actualizados (mitigaci├│n de mayor riesgo).
+-     */
+-    public ResultadoPromocion promoverAMonitor(Integer usuarioId) {
+-        Optional<User> opt = userRepository.findById(usuarioId);
++    public enum PromotionResult { OK, NOT_FOUND, NOT_APPROVED, ALREADY_MONITOR }
++
++    public PromotionResult promoteToMonitor(Integer userId) {
++        Optional<User> opt = userRepository.findById(userId);
+         if (opt.isEmpty()) {
+-            return ResultadoPromocion.NO_EXISTE;
++            return PromotionResult.NOT_FOUND;
+         }
+         User u = opt.get();
+         if (u.getRole() != null && "MONITOR".equals(u.getRole().getNombre())) {
+-            return ResultadoPromocion.YA_ES_MONITOR;
++            return PromotionResult.ALREADY_MONITOR;
+         }
+-        if (!postulacionRepository.existsByAspiranteIdAndEstado(usuarioId, Postulacion.APROBADA)) {
+-            return ResultadoPromocion.NO_APROBADO;
++        if (!applicationRepository.existsByAspiranteIdAndEstado(userId, Application.APROBADA)) {
++            return PromotionResult.NOT_APPROVED;
+         }
+-        String rolAnterior = u.getRole() != null ? u.getRole().getNombre() : "ÔÇö";
+-        u.setRole(obtenerRol("MONITOR"));
++        String previousRole = u.getRole() != null ? u.getRole().getNombre() : "ÔÇö";
++        u.setRole(getOrCreateRole("MONITOR"));
+         u.setTokenVersion(u.getTokenVersion() + 1);
+         userRepository.save(u);
+-        registrar(u, Historial.CAMBIO_ROL,
+-                "Promovido de " + rolAnterior + " a MONITOR tras aprobaci├│n de postulaci├│n");
+-        return ResultadoPromocion.OK;
++        logHistory(u, History.CAMBIO_ROL,
++                "Promovido de " + previousRole + " a MONITOR tras aprobaci├│n de postulaci├│n");
++        return PromotionResult.OK;
+     }
+ 
+-    public enum ResultadoCambio { OK, ACTUAL_INCORRECTA, NUEVA_INVALIDA }
++    public enum PasswordChangeResult { OK, WRONG_CURRENT, INVALID_NEW }
+ 
+-    public ResultadoCambio cambiarPassword(String correo, String actual, String nueva) {
++    public PasswordChangeResult changePassword(String correo, String actual, String nueva) {
+         Optional<User> opt = userRepository.findByCorreo(correo);
+         if (opt.isEmpty()) {
+-            return ResultadoCambio.ACTUAL_INCORRECTA;
++            return PasswordChangeResult.WRONG_CURRENT;
+         }
+         User u = opt.get();
+ 
+         if (!passwordEncoder.matches(actual, u.getPassword())) {
+-            registrar(u, Historial.SEGURIDAD, "Intento fallido de cambio de contrase├▒a (contrase├▒a actual incorrecta)");
+-            return ResultadoCambio.ACTUAL_INCORRECTA;
++            logHistory(u, History.SEGURIDAD, "Intento fallido de cambio de contrase├▒a (contrase├▒a actual incorrecta)");
++            return PasswordChangeResult.WRONG_CURRENT;
+         }
+-        if (!contrasenaValida(nueva)) {
+-            return ResultadoCambio.NUEVA_INVALIDA;
++        if (!isPasswordValid(nueva)) {
++            return PasswordChangeResult.INVALID_NEW;
+         }
+-        u.setPassword(codificar(nueva));
++        u.setPassword(encode(nueva));
+         userRepository.save(u);
+-        registrar(u, Historial.SEGURIDAD, "Contrase├▒a actualizada correctamente");
+-        return ResultadoCambio.OK;
++        logHistory(u, History.SEGURIDAD, "Contrase├▒a actualizada correctamente");
++        return PasswordChangeResult.OK;
+     }
+ 
+-    public void solicitarRecuperacion(String correo) {
+-        if (!correoInstitucional(correo)) {
++    public void requestPasswordReset(String correo) {
++        if (!isInstitutionalEmail(correo)) {
+             return;
+         }
+         userRepository.findByCorreo(correo.trim()).ifPresent(u -> {
+             String token = UUID.randomUUID().toString();
+             u.setTokenReset(token);
+-            u.setTokenResetExpira(LocalDateTime.now().plusMinutes(VIGENCIA_RESET_MIN));
++            u.setTokenResetExpira(LocalDateTime.now().plusMinutes(RESET_VALIDITY_MIN));
+             userRepository.save(u);
+-            emailService.enviarRecuperacion(u.getCorreo(), token);
++            emailService.sendPasswordReset(u.getCorreo(), token);
+         });
+     }
+ 
+-    public enum ResultadoReset { OK, TOKEN_INVALIDO, EXPIRADO, NUEVA_INVALIDA }
++    public enum PasswordResetResult { OK, INVALID_TOKEN, EXPIRED, INVALID_NEW }
+ 
+-    public ResultadoReset restablecerPassword(String token, String nueva) {
++    public PasswordResetResult resetPassword(String token, String nueva) {
+         Optional<User> opt = userRepository.findByTokenReset(token);
+         if (opt.isEmpty()) {
+-            return ResultadoReset.TOKEN_INVALIDO;
++            return PasswordResetResult.INVALID_TOKEN;
+         }
+         User u = opt.get();
+         if (u.getTokenResetExpira() == null || u.getTokenResetExpira().isBefore(LocalDateTime.now())) {
+-            return ResultadoReset.EXPIRADO;
++            return PasswordResetResult.EXPIRED;
+         }
+-        if (!contrasenaValida(nueva)) {
+-            return ResultadoReset.NUEVA_INVALIDA;
++        if (!isPasswordValid(nueva)) {
++            return PasswordResetResult.INVALID_NEW;
+         }
+-        u.setPassword(codificar(nueva));
++        u.setPassword(encode(nueva));
+         u.setTokenReset(null);
+         u.setTokenResetExpira(null);
+         userRepository.save(u);
+-        registrar(u, Historial.SEGURIDAD, "Contrase├▒a restablecida por recuperaci├│n");
+-        return ResultadoReset.OK;
++        logHistory(u, History.SEGURIDAD, "Contrase├▒a restablecida por recuperaci├│n");
++        return PasswordResetResult.OK;
+     }
+ 
+-    private void registrar(User u, String tipo, String descripcion) {
+-        historialRepository.save(new Historial(u, tipo, descripcion, LocalDateTime.now()));
++    private void logHistory(User u, String tipo, String descripcion) {
++        historyRepository.save(new History(u, tipo, descripcion, LocalDateTime.now()));
+     }
+ 
+-    private Role obtenerRol(String nombre) {
+-        Role rol = roleRepository.findByNombre(nombre);
+-        if (rol == null) {
+-            rol = roleRepository.save(new Role(nombre));
++    private Role getOrCreateRole(String nombre) {
++        Role role = roleRepository.findByNombre(nombre);
++        if (role == null) {
++            role = roleRepository.save(new Role(nombre));
+         }
+-        return rol;
++        return role;
+     }
+ 
+-    private String generarPasswordTemporal() {
++    private String generateTemporaryPassword() {
+         return "Sh1#" + UUID.randomUUID().toString().substring(0, 8);
+     }
+ 
+-    private boolean esVacio(String s) {
++    private boolean isBlank(String s) {
+         return s == null || s.isBlank();
+     }
+ }

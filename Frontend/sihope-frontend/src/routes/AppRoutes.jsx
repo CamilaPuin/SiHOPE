@@ -1,77 +1,68 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
-import RutaProtegida from "../components/RutaProtegida";
-import RutaRol from "../components/RutaRol";
+import ProtectedRoute from "../components/ProtectedRoute";
+import RoleRoute from "../components/RoleRoute";
 import AppShell from "../components/layout/AppShell";
 import { useAuth } from "../hooks/useAuth";
-import { panelPorRol } from "../utils/roles";
+import { panelByRole } from "../utils/roles";
 import { PageLoader } from "../components/common/Spinner";
 
-// Páginas públicas
 import Login from "../pages/Login/Login";
-import Registro from "../pages/Registro/Registro";
-import Recuperar from "../pages/Recuperar/Recuperar";
-import Restablecer from "../pages/Restablecer/Restablecer";
-import Verificar from "../pages/Verificar/Verificar";
+import Registration from "../pages/Registration/Registration";
+import RecoverPassword from "../pages/RecoverPassword/RecoverPassword";
+import ResetPassword from "../pages/ResetPassword/ResetPassword";
+import Verify from "../pages/Verify/Verify";
 
-// Páginas internas
 import Home from "../pages/Home/Home";
-import Coordinador from "../pages/Coordinador/Coordinador";
-import CoordinadorConvocatorias from "../pages/Coordinador/CoordinadorConvocatorias";
+import Coordinator from "../pages/Coordinator/Coordinator";
+import CoordinatorVacancies from "../pages/Coordinator/CoordinatorVacancies";
 import Monitor from "../pages/Monitor/Monitor";
-import MonitorDisponibilidad from "../pages/Monitor/MonitorDisponibilidad";
-import Monitores from "../pages/Monitores/Monitores";
-import Convocatorias from "../pages/Convocatorias/Convocatorias";
-import Credenciales from "../pages/Credenciales/Credenciales";
-import AdminUsuarios from "../pages/AdminUsuarios/AdminUsuarios";
+import MonitorAvailability from "../pages/Monitor/MonitorAvailability";
+import Monitors from "../pages/Monitors/Monitors";
+import Vacancies from "../pages/Vacancies/Vacancies";
+import Credentials from "../pages/Credentials/Credentials";
+import AdminUsers from "../pages/AdminUsers/AdminUsers";
 
-/** Redirige la raíz "/" al panel del rol (o a /login si no hay sesión). */
-function Raiz() {
-    const { usuario, cargando } = useAuth();
-    if (cargando) return <PageLoader mensaje="Cargando…" />;
-    if (!usuario) return <Navigate to="/login" replace />;
-    return <Navigate to={panelPorRol(usuario.rol)} replace />;
+function Root() {
+    const { user, loading } = useAuth();
+    if (loading) return <PageLoader message="Cargando…" />;
+    if (!user) return <Navigate to="/login" replace />;
+    return <Navigate to={panelByRole(user.rol)} replace />;
 }
 
 export default function AppRoutes() {
     return (
         <Routes>
-            {/* Públicas */}
             <Route path="/login" element={<Login />} />
-            <Route path="/registro" element={<Registro />} />
-            <Route path="/recuperar" element={<Recuperar />} />
-            <Route path="/restablecer" element={<Restablecer />} />
-            <Route path="/verificar" element={<Verificar />} />
+            <Route path="/registro" element={<Registration />} />
+            <Route path="/recuperar" element={<RecoverPassword />} />
+            <Route path="/restablecer" element={<ResetPassword />} />
+            <Route path="/verificar" element={<Verify />} />
 
-            {/* Protegidas (requieren sesión) dentro del layout con barra lateral */}
-            <Route element={<RutaProtegida />}>
+            <Route element={<ProtectedRoute />}>
                 <Route element={<AppShell />}>
                     <Route path="/home" element={<Home />} />
-                    <Route path="/coordinador" element={<Coordinador />} />
+                    <Route path="/coordinador" element={<Coordinator />} />
                     <Route path="/monitor" element={<Monitor />} />
-                    <Route path="/monitores" element={<Monitores />} />
-                    <Route path="/convocatorias" element={<Convocatorias />} />
-                    <Route path="/credenciales" element={<Credenciales />} />
+                    <Route path="/monitores" element={<Monitors />} />
+                    <Route path="/convocatorias" element={<Vacancies />} />
+                    <Route path="/credenciales" element={<Credentials />} />
 
-                    {/* Disponibilidad: solo monitores (HU_006) */}
-                    <Route element={<RutaRol rol="MONITOR" />}>
-                        <Route path="/monitor/disponibilidad" element={<MonitorDisponibilidad />} />
+                    <Route element={<RoleRoute role="MONITOR" />}>
+                        <Route path="/monitor/disponibilidad" element={<MonitorAvailability />} />
                     </Route>
 
-                    {/* Gestión de convocatorias: solo coordinadores (HU_008/HU_009) */}
-                    <Route element={<RutaRol rol="COORDINADOR" />}>
-                        <Route path="/coordinador/convocatorias" element={<CoordinadorConvocatorias />} />
+                    <Route element={<RoleRoute role="COORDINADOR" />}>
+                        <Route path="/coordinador/convocatorias" element={<CoordinatorVacancies />} />
                     </Route>
 
-                    {/* Solo administrador */}
-                    <Route element={<RutaRol rol="ADMINISTRADOR" />}>
-                        <Route path="/admin/usuarios" element={<AdminUsuarios />} />
+                    <Route element={<RoleRoute role="ADMINISTRADOR" />}>
+                        <Route path="/admin/usuarios" element={<AdminUsers />} />
                     </Route>
                 </Route>
             </Route>
 
-            {/* Raíz y comodín */}
-            <Route path="/" element={<Raiz />} />
+            <Route path="/" element={<Root />} />
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );

@@ -263,7 +263,8 @@ a { color: inherit; }
 }
 .field .hint { color: var(--gris-suave); font-weight: 400; font-size: 0.8rem; }
 
-.input, input[type="text"], input[type="email"], input[type="password"],
+.input, input:not([type]), input[type="text"], input[type="email"], input[type="password"],
+input[type="number"], input[type="tel"], input[type="search"],
 input[type="date"], input[type="time"], select, textarea {
     width: 100%;
     padding: 12px 14px;

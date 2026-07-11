@@ -1,11 +1,12 @@
 package edu.uptc.swii.sihope.dto.response;
 
-import edu.uptc.swii.sihope.dto.UsuarioSesion;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import edu.uptc.swii.sihope.dto.UserSession;
 
-/**
- * Respuesta del login: el token JWT que el frontend guarda y adjunta como
- * {@code Authorization: Bearer}, junto con los datos del usuario para hidratar
- * la sesión sin una llamada adicional.
- */
-public record LoginResponse(String token, UsuarioSesion usuario) {
+public record LoginResponse(String token,
+                            @JsonProperty("usuario") UserSession user) {
+
+    public UserSession usuario() {
+        return user;
+    }
 }

@@ -1,4 +1,3 @@
-/** Pie de página institucional. Portado del fragmento `footer` de layout.html. */
 export default function Footer() {
     return (
         <footer className="footer">

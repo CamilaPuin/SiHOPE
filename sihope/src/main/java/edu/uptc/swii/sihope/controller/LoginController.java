@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import edu.uptc.swii.sihope.domain.User;
-import edu.uptc.swii.sihope.dto.UsuarioAutenticado;
-import edu.uptc.swii.sihope.dto.UsuarioSesion;
+import edu.uptc.swii.sihope.dto.AuthenticatedUser;
+import edu.uptc.swii.sihope.dto.UserSession;
 import edu.uptc.swii.sihope.dto.request.LoginRequest;
 import edu.uptc.swii.sihope.dto.response.ApiResponse;
 import edu.uptc.swii.sihope.dto.response.LoginResponse;
@@ -40,42 +40,42 @@ public class LoginController {
             description = "Valida las credenciales y devuelve un token JWT junto con los datos del usuario.")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
 
-        Optional<User> resultado = userService.autenticar(request.getCorreo(), request.getPassword());
+        Optional<User> result = userService.authenticate(request.getEmail(), request.getPassword());
 
-        if (resultado.isEmpty()) {
+        if (result.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error("Correo o contraseña incorrectos."));
         }
 
-        User usuario = resultado.get();
+        User user = result.get();
 
-        if (!usuario.isVerificado()) {
+        if (!user.isVerificado()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error("La cuenta aún no ha sido verificada."));
         }
 
-        if (!usuario.isActivo()) {
+        if (!user.isActivo()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error("La cuenta está inactiva. Contacta al administrador."));
         }
 
-        String token = jwtService.generar(usuario);
-        LoginResponse cuerpo = new LoginResponse(token, UsuarioSesion.desde(usuario));
+        String token = jwtService.generate(user);
+        LoginResponse body = new LoginResponse(token, UserSession.from(user));
 
-        return ResponseEntity.ok(ApiResponse.ok("Inicio de sesión exitoso.", cuerpo));
+        return ResponseEntity.ok(ApiResponse.ok("Inicio de sesión exitoso.", body));
     }
 
     @GetMapping("/me")
     @Operation(summary = "Sesión actual",
             description = "Devuelve el usuario asociado al token JWT enviado en el header Authorization.")
-    public ResponseEntity<ApiResponse<UsuarioSesion>> me(UsuarioAutenticado autenticado) {
-        if (autenticado == null) {
+    public ResponseEntity<ApiResponse<UserSession>> me(AuthenticatedUser authenticated) {
+        if (authenticated == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error("No hay una sesión activa."));
         }
-        UsuarioSesion sesion = new UsuarioSesion(
-                autenticado.nombre(), autenticado.iniciales(), autenticado.correo(), autenticado.rol());
-        return ResponseEntity.ok(ApiResponse.ok("Sesión activa.", sesion));
+        UserSession session = new UserSession(
+                authenticated.name(), authenticated.initials(), authenticated.email(), authenticated.role());
+        return ResponseEntity.ok(ApiResponse.ok("Sesión activa.", session));
     }
 
     @PostMapping("/logout")

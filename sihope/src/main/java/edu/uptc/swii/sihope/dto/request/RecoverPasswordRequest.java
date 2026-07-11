@@ -1,18 +1,21 @@
 package edu.uptc.swii.sihope.dto.request;
 
-/** Solicitud de recuperación de contraseña por correo (@RequestBody). */
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class RecoverPasswordRequest {
 
-    private String correo;
+    @JsonProperty("correo")
+    private String email;
 
     public RecoverPasswordRequest() {
     }
 
-    public String getCorreo() {
-        return correo;
+    public String getEmail() {
+        return email;
     }
 
-    public void setCorreo(String correo) {
-        this.correo = correo;
+    public void setEmail(String email) {
+        this.email = email;
     }
+
 }

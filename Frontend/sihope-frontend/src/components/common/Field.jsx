@@ -1,11 +1,4 @@
-/**
- * Campo de formulario (label + input/select + mensaje de error), reproduciendo
- * la estructura `.field` de sihope.css. Cuando `error` tiene texto, aplica la
- * clase `.has-error` y muestra el mensaje.
- *
- * Renderiza un <input> por defecto; para un <select> u otro control, pasa el
- * control como `children` (se ignora el resto de props de input).
- */
+
 export default function Field({
     label,
     id,

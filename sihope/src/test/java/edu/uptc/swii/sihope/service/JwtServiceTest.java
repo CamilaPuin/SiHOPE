@@ -11,15 +11,11 @@ import edu.uptc.swii.sihope.domain.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 
-/**
- * Pruebas unitarias del {@link JwtService}: emisión, validación, expiración y
- * detección de firmas inválidas.
- */
 class JwtServiceTest {
 
-    private static final String SECRETO = "clave-de-prueba-sihope-min-32-bytes-1234567890";
+    private static final String SECRET = "clave-de-prueba-sihope-min-32-bytes-1234567890";
 
-    private User usuarioDemo() {
+    private User demoUser() {
         User u = new User();
         u.setId(42);
         u.setNombres("Ana");
@@ -31,30 +27,30 @@ class JwtServiceTest {
     }
 
     @Test
-    void generaYValidaTokenConLosClaimsEsperados() {
-        JwtService jwt = new JwtService(SECRETO, 60_000);
-        String token = jwt.generar(usuarioDemo());
+    void generatesAndValidatesTokenWithExpectedClaims() {
+        JwtService jwt = new JwtService(SECRET, 60_000);
+        String token = jwt.generate(demoUser());
 
-        Claims claims = jwt.validarYExtraer(token);
+        Claims claims = jwt.parseAndValidate(token);
 
         assertEquals("ana@uptc.edu.co", claims.getSubject());
         assertEquals(42, claims.get(JwtService.CLAIM_ID, Integer.class));
-        assertEquals("MONITOR", claims.get(JwtService.CLAIM_ROL, String.class));
+        assertEquals("MONITOR", claims.get(JwtService.CLAIM_ROLE, String.class));
         assertEquals(3, claims.get(JwtService.CLAIM_TOKEN_VERSION, Integer.class));
     }
 
     @Test
-    void rechazaTokenExpirado() {
-        JwtService jwt = new JwtService(SECRETO, -1_000); // ya expirado al emitir
-        String token = jwt.generar(usuarioDemo());
-        assertThrows(JwtException.class, () -> jwt.validarYExtraer(token));
+    void rejectsExpiredToken() {
+        JwtService jwt = new JwtService(SECRET, -1_000);
+        String token = jwt.generate(demoUser());
+        assertThrows(JwtException.class, () -> jwt.parseAndValidate(token));
     }
 
     @Test
-    void rechazaTokenConFirmaInvalida() {
-        JwtService emisor = new JwtService(SECRETO, 60_000);
-        JwtService otro = new JwtService("otra-clave-distinta-de-min-32-bytes-abcdef", 60_000);
-        String token = emisor.generar(usuarioDemo());
-        assertThrows(JwtException.class, () -> otro.validarYExtraer(token));
+    void rejectsTokenWithInvalidSignature() {
+        JwtService issuer = new JwtService(SECRET, 60_000);
+        JwtService other = new JwtService("otra-clave-distinta-de-min-32-bytes-abcdef", 60_000);
+        String token = issuer.generate(demoUser());
+        assertThrows(JwtException.class, () -> other.parseAndValidate(token));
     }
 }
