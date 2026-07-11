@@ -82,6 +82,31 @@ class AvailabilityServiceTest {
     }
 
     @Test
+    void rejectsMoreThanEightTotalHours() {
+        // 5 h (Lunes) + 4 h (Martes) = 9 h en total, supera el tope de 8 h.
+        List<TimeBlock> blocks = List.of(
+                new TimeBlock(1, "08:00", "13:00"),
+                new TimeBlock(2, "08:00", "12:00"));
+
+        List<String> errors = service.replace(1, blocks);
+
+        assertFalse(errors.isEmpty());
+        verify(availabilityRepository, never()).saveAll(any());
+    }
+
+    @Test
+    void acceptsExactlyEightTotalHours() {
+        List<TimeBlock> blocks = List.of(
+                new TimeBlock(1, "08:00", "12:00"),
+                new TimeBlock(2, "08:00", "12:00"));
+
+        List<String> errors = service.replace(1, blocks);
+
+        assertTrue(errors.isEmpty());
+        verify(availabilityRepository).saveAll(any());
+    }
+
+    @Test
     void reportsErrorIfMonitorDoesNotExist() {
         when(userRepository.findById(anyInt())).thenReturn(Optional.empty());
         List<String> errors = service.replace(99, List.of(new TimeBlock(1, "10:00", "12:00")));

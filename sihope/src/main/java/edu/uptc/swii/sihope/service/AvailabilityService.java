@@ -1,5 +1,6 @@
 package edu.uptc.swii.sihope.service;
 
+import java.time.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -29,6 +30,9 @@ public class AvailabilityService {
     }
 
     private static final String MONITOR_ROLE = "MONITOR";
+
+    /** Tope de disponibilidad semanal que un monitor puede registrar. */
+    private static final long MAX_TOTAL_MINUTES = 8 * 60;
 
     public List<MonitorDirectoryResponse> listMonitors() {
         return userRepository.findByRole_NameOrderByFirstNameAscLastNameAsc(MONITOR_ROLE)
@@ -84,8 +88,8 @@ public class AvailabilityService {
             TimeBlock b = list.get(i);
             String label = "Bloque " + (i + 1) + ": ";
 
-            if (b.diaSemana() < 1 || b.diaSemana() > 6) {
-                errors.add(label + "el día de la semana debe estar entre 1 (Lunes) y 6 (Sabado).");
+            if (b.diaSemana() < 1 || b.diaSemana() > 7) {
+                errors.add(label + "el día de la semana debe estar entre Lunes y Sabado.");
                 continue;
             }
             LocalTime start = parseTime(b.horaInicio());
@@ -102,6 +106,16 @@ public class AvailabilityService {
         }
 
         errors.addAll(detectOverlaps(toSave));
+
+        long totalMinutes = toSave.stream()
+                .mapToLong(b -> Duration.between(b.getStartTime(), b.getEndTime()).toMinutes())
+                .sum();
+        if (totalMinutes > MAX_TOTAL_MINUTES) {
+            long hours = totalMinutes / 60;
+            long minutes = totalMinutes % 60;
+            errors.add("La disponibilidad total no puede superar las 8 horas (actualmente suma "
+                    + hours + " h" + (minutes > 0 ? " " + minutes + " min" : "") + ").");
+        }
 
         if (!errors.isEmpty()) {
             return errors;

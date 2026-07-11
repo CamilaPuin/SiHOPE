@@ -13,6 +13,8 @@ import {
 let counter = 0;
 const newId = () => `bloque-${counter++}`;
 
+const MAX_TOTAL_MINUTES = 8 * 60;
+
 function mondayOfThisWeek() {
     const today = new Date();
     const day = today.getDay();
@@ -90,6 +92,21 @@ export default function MonitorAvailability() {
                 horaFin: toHHmm(end)
             };
         });
+
+        const totalMinutes = bloques.reduce((acc, b) => {
+            const [hi, mi] = b.horaInicio.split(":").map(Number);
+            const [hf, mf] = b.horaFin.split(":").map(Number);
+            return acc + Math.max(0, hf * 60 + mf - (hi * 60 + mi));
+        }, 0);
+        if (totalMinutes > MAX_TOTAL_MINUTES) {
+            Swal.fire({
+                icon: "warning",
+                title: "Superas el máximo de 8 horas",
+                text: `Tu disponibilidad suma ${(totalMinutes / 60).toFixed(1)} h. `
+                    + "Elimina algunas franjas para no exceder las 8 horas en total."
+            });
+            return;
+        }
 
         setSaving(true);
         try {
