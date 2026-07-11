@@ -53,7 +53,7 @@ export default function Registration() {
         setSubmitting(true);
         try {
             await register(form);
-            navigate("/login?registrado");
+            navigate("/login?registered");
         } catch (err) {
             if (err.data && typeof err.data === "object") {
                 setErrors(err.data);
