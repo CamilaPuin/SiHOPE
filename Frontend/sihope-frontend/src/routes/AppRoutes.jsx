@@ -16,12 +16,16 @@ import Verify from "../pages/Verify/Verify";
 import Home from "../pages/Home/Home";
 import Coordinator from "../pages/Coordinator/Coordinator";
 import CoordinatorVacancies from "../pages/Coordinator/CoordinatorVacancies";
+import CoordinatorReports from "../pages/Coordinator/CoordinatorReports";
 import Monitor from "../pages/Monitor/Monitor";
 import MonitorAvailability from "../pages/Monitor/MonitorAvailability";
+import MonitorSubjects from "../pages/Monitor/MonitorSubjects";
 import Monitors from "../pages/Monitors/Monitors";
 import Vacancies from "../pages/Vacancies/Vacancies";
 import Credentials from "../pages/Credentials/Credentials";
 import AdminUsers from "../pages/AdminUsers/AdminUsers";
+import BookAppointment from "../pages/Appointments/BookAppointment";
+import MyAppointments from "../pages/Appointments/MyAppointments";
 
 function Root() {
     const { user, loading } = useAuth();
@@ -47,9 +51,12 @@ export default function AppRoutes() {
                     <Route path="/monitores" element={<Monitors />} />
                     <Route path="/convocatorias" element={<Vacancies />} />
                     <Route path="/credenciales" element={<Credentials />} />
+                    <Route path="/citas" element={<MyAppointments />} />
+                    <Route path="/agendar/:monitorId" element={<BookAppointment />} />
 
                     <Route element={<RoleRoute role="MONITOR" />}>
                         <Route path="/monitor/disponibilidad" element={<MonitorAvailability />} />
+                        <Route path="/monitor/asignaturas" element={<MonitorSubjects />} />
                     </Route>
 
                     <Route element={<RoleRoute role="COORDINADOR" />}>

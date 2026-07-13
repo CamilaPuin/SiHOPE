@@ -10,6 +10,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import edu.uptc.swii.sihope.domain.Asignatura;
 import edu.uptc.swii.sihope.domain.Availability;
 import edu.uptc.swii.sihope.domain.User;
 import edu.uptc.swii.sihope.dto.TimeBlock;
@@ -31,17 +32,22 @@ public class AvailabilityService {
 
     private static final String MONITOR_ROLE = "MONITOR";
 
-    /** Tope de disponibilidad semanal que un monitor puede registrar. */
     private static final long MAX_TOTAL_MINUTES = 8 * 60;
 
-    public List<MonitorDirectoryResponse> listMonitors() {
-        return userRepository.findByRole_NameOrderByFirstNameAscLastNameAsc(MONITOR_ROLE)
-                .stream()
+
+    @Transactional(readOnly = true)
+    public List<MonitorDirectoryResponse> listMonitors(Integer asignaturaId) {
+        List<User> monitors = (asignaturaId == null)
+                ? userRepository.findByRole_NameOrderByFirstNameAscLastNameAsc(MONITOR_ROLE)
+                : userRepository.findDistinctByRole_NameAndSubjects_IdOrderByFirstNameAscLastNameAsc(
+                        MONITOR_ROLE, asignaturaId);
+        return monitors.stream()
                 .map(m -> new MonitorDirectoryResponse(
                         m.getId(),
                         fullName(m),
                         initials(m),
                         m.getEmail(),
+                        m.getSubjects().stream().map(Asignatura::getName).sorted().toList(),
                         getBlocks(m.getId())))
                 .toList();
     }

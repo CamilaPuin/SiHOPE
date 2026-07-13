@@ -87,7 +87,6 @@ public class Availability {
         this.endTime = endTime;
     }
 
-    // Spanish aliases for compatibility
     public int getDiaSemana() {
         return getDayOfWeek();
     }

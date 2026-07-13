@@ -83,7 +83,6 @@ class AvailabilityServiceTest {
 
     @Test
     void rejectsMoreThanEightTotalHours() {
-        // 5 h (Lunes) + 4 h (Martes) = 9 h en total, supera el tope de 8 h.
         List<TimeBlock> blocks = List.of(
                 new TimeBlock(1, "08:00", "13:00"),
                 new TimeBlock(2, "08:00", "12:00"));
@@ -125,7 +124,7 @@ class AvailabilityServiceTest {
         when(availabilityRepository.findByMonitorIdOrderByDayOfWeekAscStartTimeAsc(1))
                 .thenReturn(List.of(new Availability(monitor, 1, LocalTime.of(10, 0), LocalTime.of(12, 0))));
 
-        List<MonitorDirectoryResponse> monitors = service.listMonitors();
+        List<MonitorDirectoryResponse> monitors = service.listMonitors(null);
 
         assertEquals(1, monitors.size());
         MonitorDirectoryResponse dto = monitors.get(0);

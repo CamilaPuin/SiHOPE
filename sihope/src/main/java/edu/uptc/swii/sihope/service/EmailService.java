@@ -75,6 +75,69 @@ public class EmailService {
                 "Solicitaste restablecer tu contraseña. El enlace vence en 30 minutos:\n  " + link);
     }
 
+    public void sendCitaReservada(String monitorEmail, String studentName, String subjectName,
+                                  String date, String time) {
+        String body = """
+                <p><strong>%s</strong> reservó una monitoría contigo.</p>
+                <ul>
+                  <li><strong>Asignatura:</strong> %s</li>
+                  <li><strong>Fecha:</strong> %s</li>
+                  <li><strong>Hora:</strong> %s</li>
+                </ul>
+                <p>Ingresa a SiHope para confirmarla o revisarla.</p>
+                """.formatted(studentName, subjectName, date, time);
+        send(monitorEmail, "Nueva cita de monitoría por confirmar", body,
+                "Cita reservada",
+                studentName + " reservó una monitoría de " + subjectName + " el " + date + " a las " + time
+                        + ". Confírmala en SiHope.");
+    }
+
+    public void sendCitaConfirmada(String studentEmail, String monitorName, String subjectName,
+                                   String date, String time) {
+        String body = """
+                <p>Tu monitoría fue <strong>confirmada</strong> por %s.</p>
+                <ul>
+                  <li><strong>Asignatura:</strong> %s</li>
+                  <li><strong>Fecha:</strong> %s</li>
+                  <li><strong>Hora:</strong> %s</li>
+                </ul>
+                """.formatted(monitorName, subjectName, date, time);
+        send(studentEmail, "Tu cita de monitoría fue confirmada", body,
+                "Cita confirmada",
+                monitorName + " confirmó tu monitoría de " + subjectName + " el " + date + " a las " + time + ".");
+    }
+
+    public void sendCitaCancelada(String recipientEmail, String subjectName, String date, String time,
+                                  String reason) {
+        String extra = (reason == null || reason.isBlank()) ? "" : "<p><strong>Motivo:</strong> " + reason + "</p>";
+        String body = """
+                <p>La monitoría de <strong>%s</strong> del %s a las %s fue <strong>cancelada</strong>.</p>
+                %s
+                <p>El horario queda liberado nuevamente.</p>
+                """.formatted(subjectName, date, time, extra);
+        send(recipientEmail, "Una cita de monitoría fue cancelada", body,
+                "Cita cancelada",
+                "La monitoría de " + subjectName + " del " + date + " a las " + time + " fue cancelada."
+                        + (reason == null || reason.isBlank() ? "" : " Motivo: " + reason));
+    }
+
+    public void sendCitaRecordatorio(String recipientEmail, String subjectName, String date, String time,
+                                     String counterpart) {
+        String body = """
+                <p>Te recordamos tu monitoría próxima:</p>
+                <ul>
+                  <li><strong>Asignatura:</strong> %s</li>
+                  <li><strong>Con:</strong> %s</li>
+                  <li><strong>Fecha:</strong> %s</li>
+                  <li><strong>Hora:</strong> %s</li>
+                </ul>
+                """.formatted(subjectName, counterpart, date, time);
+        send(recipientEmail, "Recordatorio: tienes una monitoría mañana", body,
+                "Recordatorio de cita",
+                "Recordatorio: monitoría de " + subjectName + " con " + counterpart + " el " + date
+                        + " a las " + time + ".");
+    }
+
     private void send(String recipient, String subject, String htmlBody,
                       String simulatedType, String simulatedBody) {
         Gmail gmail = gmailProvider.getIfAvailable();
