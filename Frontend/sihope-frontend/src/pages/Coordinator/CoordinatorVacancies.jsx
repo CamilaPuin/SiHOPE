@@ -52,9 +52,6 @@ export default function CoordinatorVacancies() {
     const [selectedVacancy, setSelectedVacancy] = useState(null);
     const [applications, setApplications] = useState([]);
     const [loadingApplications, setLoadingApplications] = useState(false);
-
-    // Reusable refresh invoked after create/close actions; the initial load lives
-    // in the effect below so it can be cancelled on unmount.
     const load = useCallback(async () => {
         try {
             const res = await listAll();

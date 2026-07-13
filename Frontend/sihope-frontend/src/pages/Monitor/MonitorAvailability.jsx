@@ -39,8 +39,6 @@ function blockDate(monday, diaSemana, hhmm) {
 }
 
 export default function MonitorAvailability() {
-    // The reference Monday is a stable value for the component's lifetime; it is
-    // read during render (initialDate) so it lives in state, not a ref.
     const [monday] = useState(mondayOfThisWeek);
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);

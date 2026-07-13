@@ -97,7 +97,6 @@ public class Application {
         this.appliedAt = appliedAt;
     }
 
-    // Spanish aliases for compatibility
     public Vacancy getConvocatoria() {
         return getVacancy();
     }

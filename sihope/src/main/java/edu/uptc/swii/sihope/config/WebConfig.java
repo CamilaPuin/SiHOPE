@@ -33,6 +33,10 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/monitor/**",
                         "/api/monitores",
                         "/api/monitores/**",
+                        "/api/asignaturas",
+                        "/api/asignaturas/**",
+                        "/api/citas",
+                        "/api/citas/**",
                         "/api/coordinador/**",
                         "/api/convocatorias/**",
                         "/api/credenciales/password");

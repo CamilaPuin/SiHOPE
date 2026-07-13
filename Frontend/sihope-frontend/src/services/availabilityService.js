@@ -9,5 +9,9 @@ export const saveAvailability = (bloques) =>
 export const availabilityOf = (monitorId) =>
     api.get(`/api/monitores/${monitorId}/disponibilidad`).then((r) => r.data);
 
-export const listMonitors = () =>
-    api.get("/api/monitores").then((r) => r.data);
+export const listMonitors = (asignaturaId) =>
+    api
+        .get("/api/monitores", {
+            params: asignaturaId ? { asignaturaId } : undefined
+        })
+        .then((r) => r.data);

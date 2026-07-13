@@ -144,7 +144,6 @@ public class Vacancy {
         this.coordinator = coordinator;
     }
 
-    // Spanish aliases for compatibility
     public String getTitulo() {
         return getTitle();
     }

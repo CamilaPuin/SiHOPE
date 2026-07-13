@@ -91,7 +91,6 @@ public class History {
         this.date = date;
     }
 
-    // Spanish aliases for compatibility
     public User getUsuario() {
         return getUser();
     }

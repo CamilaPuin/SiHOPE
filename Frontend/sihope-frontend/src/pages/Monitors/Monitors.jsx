@@ -1,18 +1,35 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Alert from "../../components/common/Alert";
 import Spinner from "../../components/common/Spinner";
+import { useAuth } from "../../hooks/useAuth";
 import { listMonitors } from "../../services/availabilityService";
+import { listAsignaturas } from "../../services/asignaturaService";
 import { dayName, blockRange, sortBlocks } from "../../utils/schedule";
 
 export default function Monitors() {
+    const { user } = useAuth();
+    const navigate = useNavigate();
     const [monitors, setMonitors] = useState([]);
+    const [catalog, setCatalog] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [query, setQuery] = useState("");
+    const [asignaturaId, setAsignaturaId] = useState("");
+
+    const isStudent = user?.rol === "ESTUDIANTE";
+
+    useEffect(() => {
+        listAsignaturas()
+            .then((res) => setCatalog(res.data ?? []))
+            .catch(() => setCatalog([]));
+    }, []);
 
     useEffect(() => {
         let active = true;
-        listMonitors()
+        setLoading(true);
+        setError("");
+        listMonitors(asignaturaId || undefined)
             .then((res) => {
                 if (active) setMonitors(res.data ?? []);
             })
@@ -25,7 +42,7 @@ export default function Monitors() {
         return () => {
             active = false;
         };
-    }, []);
+    }, [asignaturaId]);
 
     const visible = useMemo(() => {
         const t = query.trim().toLowerCase();
@@ -42,8 +59,8 @@ export default function Monitors() {
             <div className="page-head">
                 <h1>Monitores disponibles</h1>
                 <p>
-                    Consulta el perfil de cada monitor y las franjas horarias en las que
-                    atiende monitorías.
+                    Consulta el perfil de cada monitor, las asignaturas que atiende y las
+                    franjas horarias en las que ofrece monitorías.
                 </p>
             </div>
 
@@ -57,6 +74,17 @@ export default function Monitors() {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                 />
+                <select
+                    value={asignaturaId}
+                    onChange={(e) => setAsignaturaId(e.target.value)}
+                >
+                    <option value="">Todas las asignaturas</option>
+                    {catalog.map((a) => (
+                        <option key={a.id} value={a.id}>
+                            {a.nombre}
+                        </option>
+                    ))}
+                </select>
             </div>
 
             {loading ? (
@@ -66,13 +94,16 @@ export default function Monitors() {
             ) : visible.length === 0 ? (
                 <Alert type="info">
                     {monitors.length === 0
-                        ? "Aún no hay monitores registrados en el programa."
+                        ? asignaturaId
+                            ? "Ningún monitor atiende la asignatura seleccionada."
+                            : "Aún no hay monitores registrados en el programa."
                         : "No hay monitores para la búsqueda ingresada."}
                 </Alert>
             ) : (
                 <section className="grid grid--auto">
                     {visible.map((m) => {
                         const blocks = sortBlocks(m.disponibilidad ?? []);
+                        const subjects = m.asignaturas ?? [];
                         return (
                             <article key={m.id} className="card monitor-card">
                                 <div className="monitor-card__head">
@@ -81,6 +112,23 @@ export default function Monitors() {
                                         <div className="monitor-card__name">{m.nombre}</div>
                                         <div className="monitor-card__prog">{m.correo}</div>
                                     </div>
+                                </div>
+
+                                <div className="mt-8">
+                                    <strong>Asignaturas</strong>
+                                    {subjects.length === 0 ? (
+                                        <p className="muted mt-8">
+                                            Este monitor aún no ha registrado asignaturas.
+                                        </p>
+                                    ) : (
+                                        <div className="chips mt-8">
+                                            {subjects.map((s) => (
+                                                <span key={s} className="chip chip--muted">
+                                                    {s}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {blocks.length === 0 ? (
@@ -92,7 +140,7 @@ export default function Monitors() {
                                         </Alert>
                                     </>
                                 ) : (
-                                    <div>
+                                    <div className="mt-16">
                                         <strong>Horarios de atención</strong>
                                         <div className="schedule mt-8">
                                             {blocks.map((b, i) => (
@@ -106,6 +154,16 @@ export default function Monitors() {
                                             ))}
                                         </div>
                                     </div>
+                                )}
+
+                                {isStudent && subjects.length > 0 && blocks.length > 0 && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-primary btn-sm mt-16"
+                                        onClick={() => navigate(`/agendar/${m.id}`)}
+                                    >
+                                        Agendar cita
+                                    </button>
                                 )}
                             </article>
                         );

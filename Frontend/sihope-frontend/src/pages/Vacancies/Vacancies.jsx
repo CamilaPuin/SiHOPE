@@ -31,8 +31,6 @@ export default function Vacancies() {
     const [submitError, setSubmitError] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
-    // Reusable refresh invoked after a successful application; the initial load
-    // lives in the effect below so it can be cancelled on unmount.
     const load = useCallback(async () => {
         try {
             const res = await listOpen();

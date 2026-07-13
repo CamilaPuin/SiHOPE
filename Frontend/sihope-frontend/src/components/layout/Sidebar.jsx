@@ -32,9 +32,17 @@ export default function Sidebar() {
                 )}
 
                 {role === "MONITOR" && (
-                    <NavLink to="/monitor/disponibilidad" className={linkClass}>
-                        <span className="nav__icon">◷</span> Mi disponibilidad
-                    </NavLink>
+                    <>
+                        <NavLink to="/monitor/disponibilidad" className={linkClass}>
+                            <span className="nav__icon">◷</span> Mi disponibilidad
+                        </NavLink>
+                        <NavLink to="/monitor/asignaturas" className={linkClass}>
+                            <span className="nav__icon">◨</span> Mis asignaturas
+                        </NavLink>
+                        <NavLink to="/citas" className={linkClass}>
+                            <span className="nav__icon">◔</span> Mis citas
+                        </NavLink>
+                    </>
                 )}
 
                 {role === "COORDINADOR" && (

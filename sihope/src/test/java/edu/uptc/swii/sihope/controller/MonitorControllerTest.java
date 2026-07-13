@@ -18,11 +18,13 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import edu.uptc.swii.sihope.config.UserArgumentResolver;
 import edu.uptc.swii.sihope.dto.AuthenticatedUser;
+import edu.uptc.swii.sihope.service.AsignaturaService;
 import edu.uptc.swii.sihope.service.AvailabilityService;
 
 class MonitorControllerTest {
 
     private AvailabilityService service;
+    private AsignaturaService asignaturaService;
     private MockMvc mvc;
 
     private static final AuthenticatedUser MONITOR =
@@ -31,7 +33,8 @@ class MonitorControllerTest {
     @BeforeEach
     void setUp() {
         service = Mockito.mock(AvailabilityService.class);
-        mvc = MockMvcBuilders.standaloneSetup(new MonitorController(service))
+        asignaturaService = Mockito.mock(AsignaturaService.class);
+        mvc = MockMvcBuilders.standaloneSetup(new MonitorController(service, asignaturaService))
                 .setCustomArgumentResolvers(new UserArgumentResolver())
                 .build();
     }
