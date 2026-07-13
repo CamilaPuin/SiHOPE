@@ -46,14 +46,24 @@ export default function Sidebar() {
                 )}
 
                 {role === "COORDINADOR" && (
-                    <NavLink to="/coordinador/convocatorias" className={linkClass}>
-                        <span className="nav__icon">◱</span> Convocatorias
-                    </NavLink>
+                    <>
+                        <NavLink to="/coordinador/convocatorias" className={linkClass}>
+                            <span className="nav__icon">◱</span> Convocatorias
+                        </NavLink>
+                        <NavLink to="/coordinador/reportes" className={linkClass}>
+                            <span className="nav__icon">◰</span> Reportes
+                        </NavLink>
+                    </>
                 )}
                 {role === "ESTUDIANTE" && (
-                    <NavLink to="/convocatorias" className={linkClass}>
-                        <span className="nav__icon">◱</span> Convocatorias
-                    </NavLink>
+                    <>
+                        <NavLink to="/convocatorias" className={linkClass}>
+                            <span className="nav__icon">◱</span> Convocatorias
+                        </NavLink>
+                        <NavLink to="/citas" className={linkClass}>
+                            <span className="nav__icon">◔</span> Mis citas
+                        </NavLink>
+                    </>
                 )}
 
                 <NavLink to="/monitores" className={linkClass}>

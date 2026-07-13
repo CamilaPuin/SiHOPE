@@ -61,6 +61,7 @@ export default function AppRoutes() {
 
                     <Route element={<RoleRoute role="COORDINADOR" />}>
                         <Route path="/coordinador/convocatorias" element={<CoordinatorVacancies />} />
+                        <Route path="/coordinador/reportes" element={<CoordinatorReports />} />
                     </Route>
 
                     <Route element={<RoleRoute role="ADMINISTRADOR" />}>
