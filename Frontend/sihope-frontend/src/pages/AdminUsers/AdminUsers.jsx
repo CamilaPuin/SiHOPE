@@ -185,6 +185,7 @@ export default function AdminUsers() {
                         <Field label="Rol" id="rol" error={errors.rol}>
                             <select
                                 id="rol"
+                                className="input"
                                 value={form.rol}
                                 onChange={update("rol")}
                             >
@@ -250,6 +251,7 @@ export default function AdminUsers() {
                                         <td>{u.correo}</td>
                                         <td>
                                             <select
+                                                className="input"
                                                 value={u.rol}
                                                 aria-label="Rol"
                                                 onChange={(e) =>

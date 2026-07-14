@@ -143,7 +143,8 @@ public class CoordinatorController {
                     + "Si el periodo no tiene datos, incluye un mensaje indicándolo.")
     public ResponseEntity<ApiResponse<CitasReportResponse>> citasReport(
             @RequestParam("desde") String desde,
-            @RequestParam("hasta") String hasta) {
+            @RequestParam("hasta") String hasta,
+            @RequestParam(value = "monitorId", required = false) Integer monitorId) {
         LocalDate[] range = parseRange(desde, hasta);
         if (range == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -151,7 +152,7 @@ public class CoordinatorController {
                             + "y 'desde' no puede ser posterior a 'hasta'."));
         }
         return ResponseEntity.ok(ApiResponse.ok("Reporte generado.",
-                reportService.citasAtendidas(range[0], range[1])));
+                reportService.citasAtendidas(range[0], range[1], monitorId)));
     }
 
     @GetMapping("/reportes/citas/export")
@@ -160,15 +161,16 @@ public class CoordinatorController {
     public ResponseEntity<byte[]> exportReport(
             @RequestParam("desde") String desde,
             @RequestParam("hasta") String hasta,
-            @RequestParam(value = "formato", defaultValue = "pdf") String formato) {
+            @RequestParam(value = "formato", defaultValue = "pdf") String formato,
+            @RequestParam(value = "monitorId", required = false) Integer monitorId) {
         LocalDate[] range = parseRange(desde, hasta);
         if (range == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
         boolean excel = "excel".equalsIgnoreCase(formato) || "xlsx".equalsIgnoreCase(formato);
         byte[] content = excel
-                ? reportService.exportExcel(range[0], range[1])
-                : reportService.exportPdf(range[0], range[1]);
+                ? reportService.exportExcel(range[0], range[1], monitorId)
+                : reportService.exportPdf(range[0], range[1], monitorId);
         String filename = "reporte-citas-" + desde + "-a-" + hasta + (excel ? ".xlsx" : ".pdf");
         MediaType type = excel
                 ? MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
