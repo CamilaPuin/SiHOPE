@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>edu.uptc.swii</groupId>
-	<artifactId>libraryapp</artifactId>
+	<artifactId>sihopeapp</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>libraryapp</name>
+	<name>sihopeapp</name>
 	<description/>
 	<url/>
 	<licenses>
@@ -88,6 +88,11 @@
 			<version>3.0.3</version>
 		</dependency>
 
+		<!-- Envío de correo real vía SMTP/JavaMail (correo institucional o proveedor). -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
 		<!-- Envío de correo vía API de Gmail (users.messages.send). -->
 		<dependency>
 			<groupId>com.google.apis</groupId>

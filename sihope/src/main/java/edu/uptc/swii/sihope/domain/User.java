@@ -71,6 +71,11 @@ public class User {
     @JoinColumn(name = "rol_id")
     private Role role;
 
+    @ManyToOne
+    @JoinColumn(name = "carrera_id")
+    @JsonIgnore
+    private Carrera career;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "monitor_asignatura",
             joinColumns = @JoinColumn(name = "monitor_id"),
@@ -183,6 +188,23 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public Carrera getCareer() {
+        return career;
+    }
+
+    public void setCareer(Carrera career) {
+        this.career = career;
+    }
+
+    @JsonIgnore
+    public Carrera getCarrera() {
+        return getCareer();
+    }
+
+    public void setCarrera(Carrera carrera) {
+        setCareer(carrera);
     }
 
     public Set<Asignatura> getSubjects() {

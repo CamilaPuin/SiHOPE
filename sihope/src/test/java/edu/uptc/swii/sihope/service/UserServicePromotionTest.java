@@ -21,6 +21,7 @@ import edu.uptc.swii.sihope.domain.Role;
 import edu.uptc.swii.sihope.domain.User;
 import edu.uptc.swii.sihope.repository.HistoryRepository;
 import edu.uptc.swii.sihope.repository.ApplicationRepository;
+import edu.uptc.swii.sihope.repository.CarreraRepository;
 import edu.uptc.swii.sihope.repository.RoleRepository;
 import edu.uptc.swii.sihope.repository.UserRepository;
 import edu.uptc.swii.sihope.service.UserService.PromotionResult;
@@ -35,6 +36,8 @@ class UserServicePromotionTest {
     private HistoryRepository historyRepository;
     @Mock
     private ApplicationRepository applicationRepository;
+    @Mock
+    private CarreraRepository carreraRepository;
     @Mock
     private EmailService emailService;
     @InjectMocks

@@ -33,6 +33,9 @@ export default function Sidebar() {
                         <NavLink to="/admin/asignaturas" className={linkClass}>
                             <span className="nav__icon">◨</span> Asignaturas
                         </NavLink>
+                        <NavLink to="/admin/carreras" className={linkClass}>
+                            <span className="nav__icon">◫</span> Carreras
+                        </NavLink>
                     </>
                 )}
 
