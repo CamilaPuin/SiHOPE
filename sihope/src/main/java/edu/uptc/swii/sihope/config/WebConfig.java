@@ -19,7 +19,7 @@ public class WebConfig implements WebMvcConfigurer {
     private final UserArgumentResolver userArgumentResolver;
 
     public WebConfig(JwtAuthInterceptor jwtAuthInterceptor,
-                     UserArgumentResolver userArgumentResolver) {
+            UserArgumentResolver userArgumentResolver) {
         this.jwtAuthInterceptor = jwtAuthInterceptor;
         this.userArgumentResolver = userArgumentResolver;
     }
@@ -53,6 +53,8 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins(allowedOrigins)
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(true);
+                .exposedHeaders("Authorization", "Content-Type") 
+                .allowCredentials(true)
+                .maxAge(3600);
     }
 }
