@@ -274,8 +274,19 @@ input[type="date"], input[type="time"], select, textarea {
     font-size: 1rem;
     background: var(--beige);
     color: var(--negro);
+    box-sizing: border-box;
     transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
+
+.swal2-container .swal2-input,
+.swal2-container .swal2-textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    resize: vertical;
+}
+
 .input:focus, input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--amarillo);
@@ -386,6 +397,52 @@ input[type="date"], input[type="time"], select, textarea {
 }
 .schedule { display: grid; gap: 6px; }
 .schedule__row { display: flex; justify-content: space-between; font-size: 0.9rem; padding: 6px 0; border-bottom: 1px dashed var(--gris-borde); }
+
+.report-brand {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: relative;
+    background: var(--blanco);
+    border: 1px solid var(--gris-borde);
+    border-left: 6px solid var(--amarillo);
+    border-radius: var(--radio);
+    padding: 18px 22px;
+    box-shadow: var(--sombra);
+    overflow: hidden;
+}
+.report-brand__logo {
+    width: 68px;
+    height: 68px;
+    object-fit: contain;
+    border-radius: var(--radio-sm);
+    background: var(--blanco);
+    flex-shrink: 0;
+}
+.report-brand__meta { flex: 1; min-width: 0; }
+.report-brand__title {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800;
+    font-size: 1.25rem;
+    margin-bottom: 4px;
+}
+.report-brand__line { color: var(--gris-texto); font-size: 0.92rem; line-height: 1.5; }
+.report-brand__line strong { color: var(--negro); font-weight: 600; }
+.report-brand__badge {
+    align-self: flex-start;
+    background: var(--negro);
+    color: var(--amarillo);
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    padding: 4px 12px;
+    border-radius: 999px;
+}
+
+.report-detail { display: grid; gap: 2px; }
+.report-detail__row { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr; gap: 12px; font-size: 0.9rem; padding: 8px 0; border-bottom: 1px dashed var(--gris-borde); }
+.report-detail__row--head { font-weight: 600; color: var(--gris-suave); border-bottom: 1px solid var(--gris-borde); }
 
 .divider { height: 1px; background: var(--gris-borde); margin: 18px 0; border: none; }
 

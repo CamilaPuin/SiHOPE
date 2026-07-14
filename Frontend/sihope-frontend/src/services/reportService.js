@@ -1,18 +1,23 @@
 import api from "./api";
 import { getToken } from "../utils/token";
 
-export const citasReport = (desde, hasta) =>
+export const citasReport = (desde, hasta, monitorId) =>
     api
-        .get("/api/coordinador/reportes/citas", { params: { desde, hasta } })
+        .get("/api/coordinador/reportes/citas", {
+            params: monitorId ? { desde, hasta, monitorId } : { desde, hasta }
+        })
         .then((r) => r.data);
 
 /**
  * Descarga el reporte exportado (pdf|excel). Usa fetch directo porque necesitamos el binario
  * como Blob y disparar la descarga en el navegador.
  */
-export async function downloadReport(desde, hasta, formato) {
+export async function downloadReport(desde, hasta, formato, monitorId) {
     const base = import.meta.env.VITE_API_URL ?? "";
-    const url = `${base}/api/coordinador/reportes/citas/export?desde=${desde}&hasta=${hasta}&formato=${formato}`;
+    let url = `${base}/api/coordinador/reportes/citas/export?desde=${desde}&hasta=${hasta}&formato=${formato}`;
+    if (monitorId) {
+        url += `&monitorId=${monitorId}`;
+    }
     const res = await fetch(url, {
         headers: { Authorization: `Bearer ${getToken()}` }
     });

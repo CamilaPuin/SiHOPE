@@ -1,7 +1,11 @@
-export default function Isotype({ negative = false, className = "" }) {
+export default function Isotype({ negative = false, className = "", src, alt = "Logo de la empresa" }) {
     const classes = ["iso", negative ? "iso--neg" : "", className]
         .filter(Boolean)
         .join(" ");
+
+    if (src) {
+        return <img className={classes} src={src} alt={alt} />;
+    }
 
     return (
         <svg

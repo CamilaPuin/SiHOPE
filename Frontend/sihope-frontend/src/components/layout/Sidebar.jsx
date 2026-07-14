@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import Isotype, { Wordmark } from "./Isotype";
 import { useAuth } from "../../hooks/useAuth";
 import { panelByRole } from "../../utils/roles";
+import logo from "../../images/logo-sihope.jpeg";
 
 export default function Sidebar() {
     const { user, signOut } = useAuth();
@@ -14,13 +15,13 @@ export default function Sidebar() {
     return (
         <aside className="sidebar">
             <div className="brand-lockup">
-                <Isotype negative />
+                <Isotype src={logo} negative />
                 <Wordmark negative />
             </div>
 
             <nav className="nav">
                 {!isAdmin && (
-                    <NavLink to={panelByRole(role)} className={linkClass}>
+                    <NavLink to={panelByRole(role)} className={linkClass} end>
                         <span className="nav__icon">◧</span> Panel principal
                     </NavLink>
                 )}

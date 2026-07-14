@@ -73,9 +73,13 @@ export default function MyAppointments() {
     const doCancel = async (c) => {
         const { value, isConfirmed } = await Swal.fire({
             title: "Cancelar cita",
-            input: "text",
+            input: "textarea",
             inputLabel: "Motivo (opcional)",
             inputPlaceholder: "Ej: conflicto de horario",
+            inputAttributes: {
+                rows: 4,
+                maxlength: 250
+            },
             showCancelButton: true,
             confirmButtonText: "Cancelar cita",
             cancelButtonText: "Volver"

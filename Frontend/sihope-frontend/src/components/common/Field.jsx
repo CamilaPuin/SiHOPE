@@ -8,6 +8,8 @@ export default function Field({
     className = "",
     ...inputProps
 }) {
+    const { className: inputClass, ...restProps } = inputProps || {};
+
     return (
         <div className={`field ${error ? "has-error" : ""} ${className}`.trim()}>
             {label && (
@@ -15,7 +17,9 @@ export default function Field({
                     {label} {hint && <span className="hint">{hint}</span>}
                 </label>
             )}
-            {children ?? <input id={id} {...inputProps} />}
+            {children ?? (
+                <input id={id} className={`input ${inputClass || ""}`.trim()} {...restProps} />
+            )}
             {error && <div className="field__error">{error}</div>}
         </div>
     );

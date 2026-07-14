@@ -23,4 +23,7 @@ public interface CitaRepository extends JpaRepository<Cita, Integer> {
 
     List<Cita> findByStatusAndDateBetweenOrderByDateAscStartTimeAsc(
             String status, LocalDate from, LocalDate to);
+
+    List<Cita> findByStatusAndMonitorIdAndDateBetweenOrderByDateAscStartTimeAsc(
+            String status, Integer monitorId, LocalDate from, LocalDate to);
 }
