@@ -6,8 +6,26 @@ import Spinner from "../../components/common/Spinner";
 import { listOpen, apply } from "../../services/vacancyService";
 
 const APPLICATION_FIELDS = [
-    { key: "promedio", label: "Promedio acumulado", type: "text", required: true, placeholder: "4.2" },
-    { key: "semestre", label: "Semestre actual", type: "text", required: true, placeholder: "6" },
+    {
+        key: "promedio",
+        label: "Promedio acumulado",
+        type: "number",
+        required: true,
+        placeholder: "4.2",
+        inputMode: "decimal",
+        step: "0.01",
+        min: "0"
+    },
+    {
+        key: "semestre",
+        label: "Semestre actual",
+        type: "number",
+        required: true,
+        placeholder: "6",
+        inputMode: "numeric",
+        step: "1",
+        min: "1"
+    },
     {
         key: "motivacion",
         label: "¿Por qué quieres ser monitor?",
@@ -16,6 +34,12 @@ const APPLICATION_FIELDS = [
         placeholder: "Cuéntanos brevemente tu motivación…"
     }
 ];
+
+const NUMERIC_FIELDS = new Set(["promedio", "semestre"]);
+const NUMERIC_VALIDATORS = {
+    promedio: (value) => /^\d+(\.\d+)?$/.test(value),
+    semestre: (value) => /^\d+$/.test(value)
+};
 
 const initialFormState = () =>
     Object.fromEntries(APPLICATION_FIELDS.map((c) => [c.key, ""]));
@@ -70,21 +94,41 @@ export default function Vacancies() {
 
     const closeModal = () => setSelected(null);
 
-    const update = (key) => (e) =>
-        setForm((prev) => ({ ...prev, [key]: e.target.value }));
+    const update = (key) => (e) => {
+        const value = e.target.value;
+
+        if (NUMERIC_FIELDS.has(key)) {
+            const validator = NUMERIC_VALIDATORS[key];
+            const isValid = value === "" || validator(value);
+            if (!isValid) {
+                return;
+            }
+        }
+
+        setForm((prev) => ({ ...prev, [key]: value }));
+    };
 
     const submit = async (e) => {
         e.preventDefault();
         setSubmitError("");
 
         const missing = {};
+        const invalid = {};
         APPLICATION_FIELDS.forEach((c) => {
-            if (c.required && !form[c.key]?.trim()) {
+            const value = form[c.key]?.trim() ?? "";
+
+            if (c.required && !value) {
                 missing[c.key] = "Este campo es obligatorio.";
             }
+
+            if (NUMERIC_FIELDS.has(c.key) && value && !NUMERIC_VALIDATORS[c.key](value)) {
+                invalid[c.key] = "Este campo solo acepta números.";
+            }
         });
-        if (Object.keys(missing).length > 0) {
-            setErrors(missing);
+
+        const nextErrors = { ...missing, ...invalid };
+        if (Object.keys(nextErrors).length > 0) {
+            setErrors(nextErrors);
             return;
         }
 
@@ -209,6 +253,7 @@ export default function Vacancies() {
                                         onChange={update(field.key)}
                                         placeholder={field.placeholder}
                                         error={errors[field.key]}
+                                        {...field}
                                     />
                                 )
                             )}
