@@ -2,6 +2,8 @@ package edu.uptc.swii.sihope.domain;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
@@ -10,6 +12,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -60,6 +64,13 @@ public class Vacancy {
     @JoinColumn(name = "coordinador_id")
     @JsonProperty("coordinador")
     private User coordinator;
+
+    @ManyToMany
+    @JoinTable(name = "convocatoria_asignatura",
+            joinColumns = @JoinColumn(name = "convocatoria_id"),
+            inverseJoinColumns = @JoinColumn(name = "asignatura_id"))
+    @JsonProperty("materias")
+    private Set<Asignatura> subjects = new LinkedHashSet<>();
 
     public Vacancy() {
     }
@@ -142,6 +153,14 @@ public class Vacancy {
 
     public void setCoordinator(User coordinator) {
         this.coordinator = coordinator;
+    }
+
+    public Set<Asignatura> getSubjects() {
+        return subjects;
+    }
+
+    public void setSubjects(Set<Asignatura> subjects) {
+        this.subjects = subjects;
     }
 
     public String getTitulo() {

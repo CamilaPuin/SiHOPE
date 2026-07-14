@@ -4,19 +4,23 @@ import { useAuth } from "../../hooks/useAuth";
 import Alert from "../../components/common/Alert";
 import Spinner from "../../components/common/Spinner";
 import { myAvailability } from "../../services/availabilityService";
+import { mySubjects } from "../../services/asignaturaService";
 import { dayName, blockRange, totalHours, sortBlocks } from "../../utils/schedule";
 
 export default function Monitor() {
     const { user } = useAuth();
     const [blocks, setBlocks] = useState([]);
+    const [subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     useEffect(() => {
         let active = true;
-        myAvailability()
-            .then((res) => {
-                if (active) setBlocks(sortBlocks(res.data ?? []));
+        Promise.all([myAvailability(), mySubjects()])
+            .then(([availabilityRes, subjectsRes]) => {
+                if (!active) return;
+                setBlocks(sortBlocks(availabilityRes.data ?? []));
+                setSubjects(subjectsRes.data ?? []);
             })
             .catch((err) => {
                 if (active) setError(err.message);
@@ -93,12 +97,29 @@ export default function Monitor() {
                 </div>
 
                 <div className="card">
-                    <div className="card__title">Próximas monitorías</div>
-                    <div className="card__subtitle">Estudiantes que agendaron contigo.</div>
-                    <p className="muted mt-16">
-                        El agendamiento de citas estará disponible próximamente. Por ahora,
-                        mantén tu disponibilidad actualizada.
-                    </p>
+                    <div className="card__title">Mis asignaturas</div>
+                    <div className="card__subtitle">
+                        Materias que orientas, asignadas por el coordinador.
+                    </div>
+
+                    {loading ? (
+                        <div className="text-center mt-16">
+                            <Spinner large />
+                        </div>
+                    ) : subjects.length === 0 ? (
+                        <p className="muted mt-16">
+                            Aún no tienes materias asignadas. El coordinador te las asignará
+                            según la convocatoria que ganaste.
+                        </p>
+                    ) : (
+                        <div className="chips mt-16">
+                            {subjects.map((s) => (
+                                <span key={s} className="chip">
+                                    {s}
+                                </span>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </section>
         </>

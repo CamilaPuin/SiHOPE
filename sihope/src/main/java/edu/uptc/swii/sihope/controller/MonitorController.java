@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 import edu.uptc.swii.sihope.dto.TimeBlock;
 import edu.uptc.swii.sihope.dto.AuthenticatedUser;
 import edu.uptc.swii.sihope.dto.request.AvailabilityRequest;
-import edu.uptc.swii.sihope.dto.request.SubjectsRequest;
 import edu.uptc.swii.sihope.dto.response.ApiResponse;
 import edu.uptc.swii.sihope.dto.response.MonitorDirectoryResponse;
 import edu.uptc.swii.sihope.service.AsignaturaService;
@@ -25,7 +24,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @Tag(name = "Disponibilidad del monitor",
-        description = "Gestión de la matriz horaria semanal y asignaturas del monitor (HU_006/HU_004).")
+        description = "Gestión de la matriz horaria semanal y consulta de las asignaturas "
+                + "asignadas por el coordinador (HU_006/HU_004).")
 public class MonitorController {
 
     private final AvailabilityService availabilityService;
@@ -61,24 +61,11 @@ public class MonitorController {
 
     @GetMapping("/api/monitor/asignaturas")
     @Operation(summary = "Consultar mis asignaturas",
-            description = "Devuelve las asignaturas/temáticas que atiende el monitor autenticado.")
+            description = "Devuelve las asignaturas que el coordinador le asignó al monitor autenticado "
+                    + "(solo lectura: la asignación es tarea del coordinador).")
     public ResponseEntity<ApiResponse<List<String>>> mySubjects(AuthenticatedUser authenticated) {
         return ResponseEntity.ok(
                 ApiResponse.ok("Asignaturas obtenidas.", asignaturaService.subjectsOf(authenticated.id())));
-    }
-
-    @PutMapping("/api/monitor/asignaturas")
-    @Operation(summary = "Actualizar mis asignaturas",
-            description = "Reemplaza por completo las asignaturas del monitor. Las que no existan en "
-                    + "el catálogo se crean automáticamente.")
-    public ResponseEntity<ApiResponse<List<String>>> updateSubjects(@RequestBody SubjectsRequest request,
-                                                                     AuthenticatedUser authenticated) {
-        List<String> errors = asignaturaService.replaceSubjects(authenticated.id(), request.getSubjects());
-        if (!errors.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("No se pudieron guardar las asignaturas.", errors));
-        }
-        return ResponseEntity.ok(ApiResponse.ok("Asignaturas actualizadas correctamente."));
     }
 
     @GetMapping("/api/monitores")
