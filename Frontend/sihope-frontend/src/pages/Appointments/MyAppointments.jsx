@@ -77,7 +77,7 @@ export default function MyAppointments() {
             inputLabel: "Motivo (opcional)",
             inputPlaceholder: "Ej: conflicto de horario",
             inputAttributes: {
-                rows: 4,
+                rows: 3,
                 maxlength: 250
             },
             showCancelButton: true,
