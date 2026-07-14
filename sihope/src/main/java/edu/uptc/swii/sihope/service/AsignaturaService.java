@@ -41,7 +41,6 @@ public class AsignaturaService {
         return asignaturaRepository.findAllByOrderByNameAsc();
     }
 
-    /** Alta manual de una asignatura del catálogo (panel del administrador). */
     @Transactional
     public List<String> createSubject(String name) {
         List<String> errors = new ArrayList<>();
@@ -58,11 +57,6 @@ public class AsignaturaService {
         return errors;
     }
 
-    /**
-     * Elimina una asignatura del catálogo. Se bloquea si algún monitor la atiende,
-     * si hay citas asociadas o si pertenece a una convocatoria, para no romper la
-     * integridad referencial.
-     */
     @Transactional
     public List<String> deleteSubject(Integer id) {
         List<String> errors = new ArrayList<>();
@@ -94,11 +88,6 @@ public class AsignaturaService {
                 .orElseGet(List::of);
     }
 
-    /**
-     * Asignación de asignaturas a un monitor por parte del coordinador. Reemplaza
-     * por completo las asignaturas del monitor; todas deben existir en el catálogo
-     * (registradas previamente por el administrador).
-     */
     @Transactional
     public List<String> assignSubjects(Integer monitorId, List<Integer> subjectIds) {
         List<String> errors = new ArrayList<>();
