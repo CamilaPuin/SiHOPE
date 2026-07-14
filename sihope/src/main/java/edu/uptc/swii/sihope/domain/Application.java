@@ -19,6 +19,8 @@ public class Application {
     public static final String PENDIENTE = "PENDIENTE";
     public static final String APROBADA = "APROBADA";
     public static final String RECHAZADA = "RECHAZADA";
+    /** Postulación cuyo aspirante ya fue promovido: ocupa una plaza de la convocatoria. */
+    public static final String MONITOR_ASIGNADO = "MONITOR_ASIGNADO";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

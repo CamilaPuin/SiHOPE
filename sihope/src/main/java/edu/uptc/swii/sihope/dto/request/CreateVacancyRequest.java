@@ -1,5 +1,7 @@
 package edu.uptc.swii.sihope.dto.request;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class CreateVacancyRequest {
@@ -13,8 +15,9 @@ public class CreateVacancyRequest {
     @JsonProperty("requisitos")
     private String requirements;
 
-    @JsonProperty("materia")
-    private String subject;
+    /** IDs de asignaturas del catálogo que orientará el monitor ganador. */
+    @JsonProperty("materiaIds")
+    private List<Integer> subjectIds;
 
     @JsonProperty("plazas")
     private Integer slots;
@@ -46,12 +49,12 @@ public class CreateVacancyRequest {
         this.requirements = requirements;
     }
 
-    public String getSubject() {
-        return subject;
+    public List<Integer> getSubjectIds() {
+        return subjectIds;
     }
 
-    public void setSubject(String subject) {
-        this.subject = subject;
+    public void setSubjectIds(List<Integer> subjectIds) {
+        this.subjectIds = subjectIds;
     }
 
     public Integer getSlots() {

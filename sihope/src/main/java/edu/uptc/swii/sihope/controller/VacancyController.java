@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import edu.uptc.swii.sihope.dto.AuthenticatedUser;
 import edu.uptc.swii.sihope.dto.request.ApplicationRequest;
 import edu.uptc.swii.sihope.dto.response.ApiResponse;
+import edu.uptc.swii.sihope.dto.response.ApplicationResponse;
 import edu.uptc.swii.sihope.dto.response.VacancyResponse;
 import edu.uptc.swii.sihope.service.VacancyService;
 import edu.uptc.swii.sihope.service.ApplicationService;
@@ -42,6 +43,16 @@ public class VacancyController {
             description = "Convocatorias en estado ABIERTA y no vencidas, visibles para los aspirantes.")
     public ResponseEntity<ApiResponse<List<VacancyResponse>>> list() {
         return ResponseEntity.ok(ApiResponse.ok("Convocatorias obtenidas.", vacancyService.listOpen()));
+    }
+
+    @GetMapping("/mis-postulaciones")
+    @Operation(summary = "Mis postulaciones",
+            description = "Postulaciones del usuario autenticado, con su estado actual "
+                    + "(PENDIENTE, APROBADA, RECHAZADA o MONITOR_ASIGNADO).")
+    public ResponseEntity<ApiResponse<List<ApplicationResponse>>> myApplications(
+            AuthenticatedUser authenticated) {
+        return ResponseEntity.ok(ApiResponse.ok("Postulaciones obtenidas.",
+                applicationService.listByApplicant(authenticated.id())));
     }
 
     @GetMapping("/{id}")

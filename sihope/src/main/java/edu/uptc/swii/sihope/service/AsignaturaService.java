@@ -3,7 +3,6 @@ package edu.uptc.swii.sihope.service;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -11,25 +10,31 @@ import org.springframework.transaction.annotation.Transactional;
 
 import edu.uptc.swii.sihope.domain.Asignatura;
 import edu.uptc.swii.sihope.domain.User;
+import edu.uptc.swii.sihope.domain.Vacancy;
 import edu.uptc.swii.sihope.repository.AsignaturaRepository;
 import edu.uptc.swii.sihope.repository.CitaRepository;
 import edu.uptc.swii.sihope.repository.UserRepository;
+import edu.uptc.swii.sihope.repository.VacancyRepository;
 
 @Service
 public class AsignaturaService {
 
     private static final int MAX_SUBJECTS_PER_MONITOR = 15;
+    private static final String MONITOR_ROLE = "MONITOR";
 
     private final AsignaturaRepository asignaturaRepository;
     private final UserRepository userRepository;
     private final CitaRepository citaRepository;
+    private final VacancyRepository vacancyRepository;
 
     public AsignaturaService(AsignaturaRepository asignaturaRepository,
                              UserRepository userRepository,
-                             CitaRepository citaRepository) {
+                             CitaRepository citaRepository,
+                             VacancyRepository vacancyRepository) {
         this.asignaturaRepository = asignaturaRepository;
         this.userRepository = userRepository;
         this.citaRepository = citaRepository;
+        this.vacancyRepository = vacancyRepository;
     }
 
     public List<Asignatura> listCatalog() {
@@ -54,8 +59,9 @@ public class AsignaturaService {
     }
 
     /**
-     * Elimina una asignatura del catálogo. Se bloquea si algún monitor la atiende
-     * o si hay citas asociadas, para no romper la integridad referencial.
+     * Elimina una asignatura del catálogo. Se bloquea si algún monitor la atiende,
+     * si hay citas asociadas o si pertenece a una convocatoria, para no romper la
+     * integridad referencial.
      */
     @Transactional
     public List<String> deleteSubject(Integer id) {
@@ -73,6 +79,10 @@ public class AsignaturaService {
             errors.add("No se puede eliminar: hay citas asociadas a esta asignatura.");
             return errors;
         }
+        if (vacancyRepository.countBySubjects_Id(id) > 0) {
+            errors.add("No se puede eliminar: hay convocatorias asociadas a esta asignatura.");
+            return errors;
+        }
         asignaturaRepository.delete(asignatura);
         return errors;
     }
@@ -84,25 +94,37 @@ public class AsignaturaService {
                 .orElseGet(List::of);
     }
 
+    /**
+     * Asignación de asignaturas a un monitor por parte del coordinador. Reemplaza
+     * por completo las asignaturas del monitor; todas deben existir en el catálogo
+     * (registradas previamente por el administrador).
+     */
     @Transactional
-    public List<String> replaceSubjects(Integer monitorId, List<String> names) {
+    public List<String> assignSubjects(Integer monitorId, List<Integer> subjectIds) {
         List<String> errors = new ArrayList<>();
 
         User monitor = userRepository.findById(monitorId).orElse(null);
-        if (monitor == null) {
+        if (monitor == null || monitor.getRole() == null
+                || !MONITOR_ROLE.equals(monitor.getRole().getName())) {
             errors.add("El monitor no existe.");
             return errors;
         }
 
-        List<String> cleaned = normalize(names);
-        if (cleaned.size() > MAX_SUBJECTS_PER_MONITOR) {
-            errors.add("Puedes registrar como máximo " + MAX_SUBJECTS_PER_MONITOR + " asignaturas.");
+        List<Integer> ids = subjectIds == null ? List.of() : subjectIds;
+        if (ids.size() > MAX_SUBJECTS_PER_MONITOR) {
+            errors.add("Un monitor puede tener como máximo " + MAX_SUBJECTS_PER_MONITOR + " asignaturas.");
             return errors;
         }
 
         Set<Asignatura> resolved = new LinkedHashSet<>();
-        for (String name : cleaned) {
-            resolved.add(findOrCreate(name));
+        for (Integer id : ids) {
+            Asignatura asignatura = (id == null) ? null
+                    : asignaturaRepository.findById(id).orElse(null);
+            if (asignatura == null) {
+                errors.add("Alguna de las asignaturas seleccionadas no existe en el catálogo.");
+                return errors;
+            }
+            resolved.add(asignatura);
         }
 
         monitor.setSubjects(resolved);
@@ -110,45 +132,24 @@ public class AsignaturaService {
         return errors;
     }
 
+    /**
+     * Al promover al ganador de una convocatoria, se le asignan las materias que
+     * el coordinador registró en esa convocatoria.
+     */
     @Transactional
-    public void assignByName(Integer monitorId, String name) {
-        if (name == null || name.isBlank()) {
+    public void assignVacancySubjects(Integer monitorId, Vacancy vacancy) {
+        if (vacancy == null || vacancy.getId() == null) {
+            return;
+        }
+        Vacancy managed = vacancyRepository.findById(vacancy.getId()).orElse(null);
+        if (managed == null || managed.getSubjects().isEmpty()) {
             return;
         }
         User monitor = userRepository.findById(monitorId).orElse(null);
         if (monitor == null) {
             return;
         }
-        monitor.getSubjects().add(findOrCreate(name));
+        monitor.getSubjects().addAll(managed.getSubjects());
         userRepository.save(monitor);
-    }
-
-    @Transactional
-    public Asignatura findOrCreate(String name) {
-        String clean = name.trim();
-        Optional<Asignatura> existing = asignaturaRepository.findByNameIgnoreCase(clean);
-        return existing.orElseGet(() -> asignaturaRepository.save(new Asignatura(clean)));
-    }
-
-    private List<String> normalize(List<String> names) {
-        List<String> out = new ArrayList<>();
-        Set<String> seen = new LinkedHashSet<>();
-        if (names == null) {
-            return out;
-        }
-        for (String raw : names) {
-            if (raw == null) {
-                continue;
-            }
-            String clean = raw.trim();
-            if (clean.isEmpty()) {
-                continue;
-            }
-            String key = clean.toLowerCase();
-            if (seen.add(key)) {
-                out.add(clean);
-            }
-        }
-        return out;
     }
 }

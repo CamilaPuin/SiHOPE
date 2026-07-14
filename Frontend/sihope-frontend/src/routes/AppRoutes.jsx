@@ -16,10 +16,10 @@ import Verify from "../pages/Verify/Verify";
 import Home from "../pages/Home/Home";
 import Coordinator from "../pages/Coordinator/Coordinator";
 import CoordinatorVacancies from "../pages/Coordinator/CoordinatorVacancies";
+import CoordinatorMonitors from "../pages/Coordinator/CoordinatorMonitors";
 import CoordinatorReports from "../pages/Coordinator/CoordinatorReports";
 import Monitor from "../pages/Monitor/Monitor";
 import MonitorAvailability from "../pages/Monitor/MonitorAvailability";
-import MonitorSubjects from "../pages/Monitor/MonitorSubjects";
 import Monitors from "../pages/Monitors/Monitors";
 import Vacancies from "../pages/Vacancies/Vacancies";
 import Credentials from "../pages/Credentials/Credentials";
@@ -57,11 +57,11 @@ export default function AppRoutes() {
 
                     <Route element={<RoleRoute role="MONITOR" />}>
                         <Route path="/monitor/disponibilidad" element={<MonitorAvailability />} />
-                        <Route path="/monitor/asignaturas" element={<MonitorSubjects />} />
                     </Route>
 
                     <Route element={<RoleRoute role="COORDINADOR" />}>
                         <Route path="/coordinador/convocatorias" element={<CoordinatorVacancies />} />
+                        <Route path="/coordinador/monitores" element={<CoordinatorMonitors />} />
                         <Route path="/coordinador/reportes" element={<CoordinatorReports />} />
                     </Route>
 

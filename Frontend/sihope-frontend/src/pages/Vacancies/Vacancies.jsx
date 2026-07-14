@@ -1,9 +1,32 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Swal from "sweetalert2";
 import Field from "../../components/common/Field";
 import Alert from "../../components/common/Alert";
 import Spinner from "../../components/common/Spinner";
-import { listOpen, apply } from "../../services/vacancyService";
+import { listOpen, apply, myApplications } from "../../services/vacancyService";
+
+const APPLICATION_STATUS = {
+    PENDIENTE: {
+        label: "Ya te postulaste",
+        badge: "badge badge-yellow",
+        border: "#e0a80d"
+    },
+    APROBADA: {
+        label: "Postulación aprobada",
+        badge: "badge badge-active",
+        border: "#1f8a4c"
+    },
+    RECHAZADA: {
+        label: "Postulación rechazada",
+        badge: "badge badge-inactive",
+        border: "#a12626"
+    },
+    MONITOR_ASIGNADO: {
+        label: "¡Fuiste asignado como monitor!",
+        badge: "badge badge-active",
+        border: "#1f8a4c"
+    }
+};
 
 const APPLICATION_FIELDS = [
     {
@@ -46,6 +69,7 @@ const initialFormState = () =>
 
 export default function Vacancies() {
     const [vacancies, setVacancies] = useState([]);
+    const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
 
@@ -57,8 +81,12 @@ export default function Vacancies() {
 
     const load = useCallback(async () => {
         try {
-            const res = await listOpen();
-            setVacancies(res.data ?? []);
+            const [vacanciesRes, applicationsRes] = await Promise.all([
+                listOpen(),
+                myApplications().catch(() => ({ data: [] }))
+            ]);
+            setVacancies(vacanciesRes.data ?? []);
+            setApplications(applicationsRes.data ?? []);
             setLoadError("");
         } catch (err) {
             setLoadError(err.message);
@@ -67,10 +95,11 @@ export default function Vacancies() {
 
     useEffect(() => {
         let active = true;
-        listOpen()
-            .then((res) => {
+        Promise.all([listOpen(), myApplications().catch(() => ({ data: [] }))])
+            .then(([vacanciesRes, applicationsRes]) => {
                 if (active) {
-                    setVacancies(res.data ?? []);
+                    setVacancies(vacanciesRes.data ?? []);
+                    setApplications(applicationsRes.data ?? []);
                     setLoadError("");
                 }
             })
@@ -84,6 +113,13 @@ export default function Vacancies() {
             active = false;
         };
     }, []);
+
+    // Estado de mi postulación por convocatoria (para resaltar las tarjetas).
+    const applicationByVacancy = useMemo(() => {
+        const map = new Map();
+        applications.forEach((a) => map.set(a.convocatoriaId, a.estado));
+        return map;
+    }, [applications]);
 
     const openModal = (vacancy) => {
         setSelected(vacancy);
@@ -178,8 +214,24 @@ export default function Vacancies() {
                 </div>
             ) : (
                 <section className="grid grid--2">
-                    {vacancies.map((c) => (
-                        <article key={c.id} className="card">
+                    {vacancies.map((c) => {
+                        const status = APPLICATION_STATUS[applicationByVacancy.get(c.id)];
+                        return (
+                        <article
+                            key={c.id}
+                            className="card"
+                            style={
+                                status
+                                    ? { border: `2px solid ${status.border}` }
+                                    : undefined
+                            }
+                        >
+                            {status && (
+                                <div style={{ marginBottom: 8 }}>
+                                    <span className={status.badge}>{status.label}</span>
+                                </div>
+                            )}
+
                             <div className="card__title">{c.titulo}</div>
                             <div className="card__subtitle">{c.materia}</div>
 
@@ -206,11 +258,18 @@ export default function Vacancies() {
                                 type="button"
                                 className="btn btn-primary btn-sm mt-16"
                                 onClick={() => openModal(c)}
+                                disabled={Boolean(status)}
+                                title={
+                                    status
+                                        ? "Ya te postulaste a esta convocatoria."
+                                        : undefined
+                                }
                             >
-                                Postularme
+                                {status ? "Ya postulado" : "Postularme"}
                             </button>
                         </article>
-                    ))}
+                        );
+                    })}
                 </section>
             )}
 

@@ -41,9 +41,6 @@ export default function Sidebar() {
                         <NavLink to="/monitor/disponibilidad" className={linkClass}>
                             <span className="nav__icon">◷</span> Mi disponibilidad
                         </NavLink>
-                        <NavLink to="/monitor/asignaturas" className={linkClass}>
-                            <span className="nav__icon">◨</span> Mis asignaturas
-                        </NavLink>
                         <NavLink to="/citas" className={linkClass}>
                             <span className="nav__icon">◔</span> Mis citas
                         </NavLink>
@@ -54,6 +51,9 @@ export default function Sidebar() {
                     <>
                         <NavLink to="/coordinador/convocatorias" className={linkClass}>
                             <span className="nav__icon">◱</span> Convocatorias
+                        </NavLink>
+                        <NavLink to="/coordinador/monitores" className={linkClass}>
+                            <span className="nav__icon">◨</span> Asignación de materias
                         </NavLink>
                         <NavLink to="/coordinador/reportes" className={linkClass}>
                             <span className="nav__icon">◰</span> Reportes

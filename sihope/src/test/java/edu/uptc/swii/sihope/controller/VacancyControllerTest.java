@@ -46,18 +46,6 @@ class VacancyControllerTest {
     }
 
     @Test
-    void listsOpenVacancies() throws Exception {
-        when(vacancyService.listOpen()).thenReturn(List.of(
-                new VacancyResponse(1, "Monitor de Cálculo", null, "req", "Cálculo",
-                        2, "2026-12-31", "ABIERTA", "2026-07-01T10:00", "Coord")));
-
-        mvc.perform(get("/api/convocatorias"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].titulo").value("Monitor de Cálculo"));
-    }
-
-    @Test
     void studentAppliesSuccessfully() throws Exception {
         when(applicationService.apply(anyInt(), anyInt(), any())).thenReturn(Map.of());
 

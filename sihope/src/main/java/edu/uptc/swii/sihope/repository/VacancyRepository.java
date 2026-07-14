@@ -13,4 +13,6 @@ public interface VacancyRepository extends JpaRepository<Vacancy, Integer> {
 
     List<Vacancy> findByStatusAndDeadlineGreaterThanEqualOrderByDeadlineAsc(
             String status, LocalDate deadline);
+
+    long countBySubjects_Id(Integer subjectId);
 }

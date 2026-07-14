@@ -13,13 +13,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import edu.uptc.swii.sihope.domain.Application;
+import edu.uptc.swii.sihope.domain.Vacancy;
 import edu.uptc.swii.sihope.dto.AuthenticatedUser;
+import edu.uptc.swii.sihope.dto.request.AssignSubjectsRequest;
 import edu.uptc.swii.sihope.dto.request.CreateVacancyRequest;
 import edu.uptc.swii.sihope.dto.request.ApplicationStatusRequest;
 import edu.uptc.swii.sihope.dto.response.ApiResponse;
@@ -111,8 +114,9 @@ public class CoordinatorController {
 
     @PostMapping("/postulaciones/{id}/promover")
     @Operation(summary = "Promover al aspirante a monitor",
-            description = "Solo aspirantes con postulación APROBADA. Invalida el token del usuario "
-                    + "(fuerza re-login) y le otorga el rol MONITOR.")
+            description = "Solo aspirantes con postulación APROBADA y mientras queden plazas libres "
+                    + "en la convocatoria. Invalida el token del usuario (fuerza re-login), le otorga "
+                    + "el rol MONITOR y le asigna las materias registradas en la convocatoria.")
     public ResponseEntity<ApiResponse<Void>> promote(@PathVariable Integer id) {
         Application application = applicationService.findById(id).orElse(null);
         if (application == null || application.getAspirante() == null) {
@@ -120,10 +124,30 @@ public class CoordinatorController {
                     .body(ApiResponse.error("La postulación no existe."));
         }
 
+        if (Application.MONITOR_ASIGNADO.equals(application.getState())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Este aspirante ya ocupa una plaza de esta convocatoria."));
+        }
+        if (!Application.APROBADA.equals(application.getState())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Solo se puede promover a aspirantes con una postulación aprobada."));
+        }
+
+        Vacancy vacancy = application.getVacancy();
+        if (vacancy != null) {
+            long assigned = applicationService.countAssignedMonitors(vacancy.getId());
+            if (assigned >= vacancy.getSlots()) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(ApiResponse.error("La convocatoria ya tiene sus " + vacancy.getSlots()
+                                + " plaza(s) ocupada(s). No es posible asignar más monitores."));
+            }
+        }
+
         PromotionResult result = userService.promoteToMonitor(application.getAspirante().getId());
-        if (result == PromotionResult.OK && application.getVacancy() != null) {
-         asignaturaService.assignByName(application.getAspirante().getId(),
-                    application.getVacancy().getSubject());
+        if (result == PromotionResult.OK) {
+            applicationService.markMonitorAssigned(application);
+            asignaturaService.assignVacancySubjects(application.getAspirante().getId(),
+                    vacancy);
         }
         return switch (result) {
             case OK -> ResponseEntity.ok(ApiResponse.ok(
@@ -135,6 +159,28 @@ public class CoordinatorController {
             case ALREADY_MONITOR -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("El aspirante ya tiene el rol de monitor."));
         };
+    }
+
+    @GetMapping("/monitores/{id}/asignaturas")
+    @Operation(summary = "Consultar las asignaturas de un monitor",
+            description = "Devuelve las asignaturas que orienta el monitor indicado.")
+    public ResponseEntity<ApiResponse<List<String>>> monitorSubjects(@PathVariable Integer id) {
+        return ResponseEntity.ok(
+                ApiResponse.ok("Asignaturas obtenidas.", asignaturaService.subjectsOf(id)));
+    }
+
+    @PutMapping("/monitores/{id}/asignaturas")
+    @Operation(summary = "Asignar asignaturas a un monitor",
+            description = "Reemplaza por completo las asignaturas que orienta el monitor. Todas deben "
+                    + "existir en el catálogo registrado por el administrador.")
+    public ResponseEntity<ApiResponse<List<String>>> assignSubjects(@PathVariable Integer id,
+                                                                    @RequestBody AssignSubjectsRequest request) {
+        List<String> errors = asignaturaService.assignSubjects(id, request.getSubjectIds());
+        if (!errors.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("No se pudieron asignar las asignaturas.", errors));
+        }
+        return ResponseEntity.ok(ApiResponse.ok("Asignaturas asignadas correctamente."));
     }
 
     @GetMapping("/reportes/citas")
