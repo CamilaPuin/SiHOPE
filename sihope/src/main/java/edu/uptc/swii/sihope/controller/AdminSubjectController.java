@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/admin/asignaturas")
+
 @Tag(name = "Administración de asignaturas",
         description = "Gestión del catálogo de asignaturas por parte del administrador. "
                 + "El catálogo ya no trae materias por defecto: se registran aquí.")

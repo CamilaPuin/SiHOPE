@@ -34,7 +34,10 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws Exception {
-
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            response.setStatus(HttpServletResponse.SC_OK);
+            return true;
+        }
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             return true;
         }
@@ -84,9 +87,12 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
     }
 
     private String requiredRoleFor(String uri) {
-        if (uri.contains("/api/admin/"))       return "ADMINISTRADOR";
-        if (uri.contains("/api/coordinador/"))  return "COORDINADOR";
-        if (uri.contains("/api/monitor/"))      return "MONITOR";
+        if (uri.contains("/api/admin/"))
+            return "ADMINISTRADOR";
+        if (uri.contains("/api/coordinador/"))
+            return "COORDINADOR";
+        if (uri.contains("/api/monitor/"))
+            return "MONITOR";
         return null;
     }
 
