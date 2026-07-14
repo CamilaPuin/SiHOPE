@@ -73,8 +73,8 @@ INSERT IGNORE INTO rol (nombre) VALUES
     ('MONITOR'),
     ('ESTUDIANTE');
 
--- Catálogo de asignaturas/temáticas (Paso 0). El monitor puede agregar las suyas
--- desde su perfil; también se auto-ingieren las materias de convocatorias existentes.
+-- Catálogo de asignaturas/temáticas (Paso 0). Solo el administrador las registra;
+-- el coordinador las asigna a las convocatorias y a los monitores.
 CREATE TABLE IF NOT EXISTS asignatura (
     id INT AUTO_INCREMENT PRIMARY KEY,
     codigo VARCHAR(50),
@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS asignatura (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Relación monitor↔asignatura (sustenta el filtro de HU_004 y la validación de HU_002).
+-- La gestiona el coordinador: manualmente o al promover al ganador de una convocatoria.
 CREATE TABLE IF NOT EXISTS monitor_asignatura (
     monitor_id INT NOT NULL,
     asignatura_id INT NOT NULL,
@@ -91,8 +92,17 @@ CREATE TABLE IF NOT EXISTS monitor_asignatura (
     CONSTRAINT fk_ma_asignatura FOREIGN KEY (asignatura_id) REFERENCES asignatura (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Materias del catálogo que orientará el monitor que gane la convocatoria.
+-- La columna convocatoria.materia se conserva como texto de resumen (nombres unidos).
+CREATE TABLE IF NOT EXISTS convocatoria_asignatura (
+    convocatoria_id INT NOT NULL,
+    asignatura_id INT NOT NULL,
+    PRIMARY KEY (convocatoria_id, asignatura_id),
+    CONSTRAINT fk_ca_convocatoria FOREIGN KEY (convocatoria_id) REFERENCES convocatoria (id),
+    CONSTRAINT fk_ca_asignatura FOREIGN KEY (asignatura_id) REFERENCES asignatura (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- El catálogo arranca vacío: el administrador registra las asignaturas desde su panel.
--- (Las materias de convocatorias existentes se auto-ingieren en DataInitializer.)
 
 -- Citas/monitorías agendadas (HU_002). slot_key con índice UNIQUE evita agendar dos
 -- citas activas en el mismo horario; se pone a NULL al cancelar para liberar el cupo

@@ -56,8 +56,8 @@ public class AdminSubjectController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar una asignatura",
-            description = "Elimina una asignatura del catálogo. Se bloquea si algún monitor la atiende "
-                    + "o si existen citas asociadas.")
+            description = "Elimina una asignatura del catálogo. Se bloquea si algún monitor la atiende, "
+                    + "si existen citas asociadas o si pertenece a una convocatoria.")
     public ResponseEntity<ApiResponse<List<String>>> delete(@PathVariable Integer id) {
         List<String> errors = asignaturaService.deleteSubject(id);
         if (!errors.isEmpty()) {

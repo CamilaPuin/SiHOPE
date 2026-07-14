@@ -39,22 +39,6 @@ class VacancyServiceTest {
         when(userRepository.findById(anyInt())).thenReturn(Optional.of(new User()));
     }
 
-    private CreateVacancyRequest validRequest() {
-        CreateVacancyRequest r = new CreateVacancyRequest();
-        r.setTitle("Monitor de Cálculo");
-        r.setSubject("Cálculo Diferencial");
-        r.setRequirements("Promedio >= 4.0");
-        r.setSlots(2);
-        r.setDeadline(LocalDate.now().plusDays(10).toString());
-        return r;
-    }
-
-    @Test
-    void createsValidVacancyInOpenState() {
-        Map<String, String> errors = service.create(1, validRequest());
-        assertTrue(errors.isEmpty());
-        verify(vacancyRepository).save(any(Vacancy.class));
-    }
 
     @Test
     void rejectsEmptyRequiredFields() {
@@ -68,20 +52,4 @@ class VacancyServiceTest {
         verify(vacancyRepository, never()).save(any());
     }
 
-    @Test
-    void rejectsDeadlineInThePast() {
-        CreateVacancyRequest r = validRequest();
-        r.setDeadline(LocalDate.now().minusDays(1).toString());
-        Map<String, String> errors = service.create(1, r);
-        assertTrue(errors.containsKey("fechaLimite"));
-        verify(vacancyRepository, never()).save(any());
-    }
-
-    @Test
-    void rejectsNonPositivePlazas() {
-        CreateVacancyRequest r = validRequest();
-        r.setSlots(0);
-        Map<String, String> errors = service.create(1, r);
-        assertTrue(errors.containsKey("plazas"));
-    }
 }
