@@ -16,6 +16,9 @@ public class CreateUserRequest {
     @JsonProperty("rol")
     private String role;
 
+    @JsonProperty("carreraId")
+    private Integer careerId;
+
     public CreateUserRequest() {
     }
 
@@ -49,6 +52,14 @@ public class CreateUserRequest {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public Integer getCareerId() {
+        return careerId;
+    }
+
+    public void setCareerId(Integer careerId) {
+        this.careerId = careerId;
     }
 
 }

@@ -25,6 +25,7 @@ import Vacancies from "../pages/Vacancies/Vacancies";
 import Credentials from "../pages/Credentials/Credentials";
 import AdminUsers from "../pages/AdminUsers/AdminUsers";
 import AdminSubjects from "../pages/AdminSubjects/AdminSubjects";
+import AdminCareers from "../pages/AdminCareers/AdminCareers";
 import BookAppointment from "../pages/Appointments/BookAppointment";
 import MyAppointments from "../pages/Appointments/MyAppointments";
 
@@ -68,6 +69,7 @@ export default function AppRoutes() {
                     <Route element={<RoleRoute role="ADMINISTRADOR" />}>
                         <Route path="/admin/usuarios" element={<AdminUsers />} />
                         <Route path="/admin/asignaturas" element={<AdminSubjects />} />
+                        <Route path="/admin/carreras" element={<AdminCareers />} />
                     </Route>
                 </Route>
             </Route>

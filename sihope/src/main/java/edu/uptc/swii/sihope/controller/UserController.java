@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import edu.uptc.swii.sihope.dto.AuthenticatedUser;
 import edu.uptc.swii.sihope.dto.request.ChangeRoleRequest;
 import edu.uptc.swii.sihope.dto.request.CreateUserRequest;
 import edu.uptc.swii.sihope.dto.response.ApiResponse;
@@ -41,7 +42,8 @@ public class UserController {
     @PostMapping
     public ResponseEntity<ApiResponse<Map<String, String>>> create(@RequestBody CreateUserRequest request) {
         Map<String, String> errors = userService.createUser(
-                request.getName(), request.getEmail(), request.getDocument(), request.getRole());
+                request.getName(), request.getEmail(), request.getDocument(),
+                request.getRole(), request.getCareerId());
 
         if (!errors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -54,30 +56,29 @@ public class UserController {
 
     @PutMapping("/{id}/rol")
     public ResponseEntity<ApiResponse<Void>> changeRole(@PathVariable Integer id,
-                                                        @RequestBody ChangeRoleRequest request) {
-        boolean ok = userService.changeRole(id, request.getRole());
-        if (ok) {
-            return ResponseEntity.ok(ApiResponse.ok("Rol actualizado correctamente."));
-        }
-
-        boolean exists = userService.listUsers().stream()
-                .anyMatch(u -> id.equals(u.getId()));
-        if (!exists) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                                        @RequestBody ChangeRoleRequest request,
+                                                        AuthenticatedUser auth) {
+        return switch (userService.changeRole(id, request.getRole(), auth.id())) {
+            case OK -> ResponseEntity.ok(ApiResponse.ok("Rol actualizado correctamente."));
+            case NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("El usuario no existe."));
-        }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("El rol indicado no es válido."));
+            case INVALID_ROLE -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("El rol indicado no es válido."));
+            case LAST_ADMIN -> ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.error(
+                            "Debe existir al menos un administrador activo. Asigna otro administrador antes de cambiar tu rol."));
+        };
     }
 
     @PatchMapping("/{id}/estado")
     public ResponseEntity<ApiResponse<Boolean>> changeStatus(@PathVariable Integer id) {
-        Boolean newStatus = userService.changeStatus(id);
-        if (newStatus == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        return switch (userService.changeStatus(id)) {
+            case ACTIVATED -> ResponseEntity.ok(ApiResponse.ok("Cuenta activada.", true));
+            case DEACTIVATED -> ResponseEntity.ok(ApiResponse.ok("Cuenta desactivada.", false));
+            case NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("El usuario no existe."));
-        }
-        String message = newStatus ? "Cuenta activada." : "Cuenta desactivada.";
-        return ResponseEntity.ok(ApiResponse.ok(message, newStatus));
+            case LAST_ADMIN -> ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.error("No puedes desactivar la única cuenta de administrador activa."));
+        };
     }
 }

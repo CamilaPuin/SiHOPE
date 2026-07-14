@@ -28,11 +28,14 @@ public class UserResponse {
     @JsonProperty("rol")
     private String role;
 
+    @JsonProperty("carrera")
+    private String career;
+
     public UserResponse() {
     }
 
     public UserResponse(Integer id, String firstName, String lastName, String studentCode,
-                        String email, boolean active, boolean verified, String role) {
+                        String email, boolean active, boolean verified, String role, String career) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -41,6 +44,7 @@ public class UserResponse {
         this.active = active;
         this.verified = verified;
         this.role = role;
+        this.career = career;
     }
 
     public static UserResponse from(User u) {
@@ -52,7 +56,8 @@ public class UserResponse {
                 u.getCorreo(),
                 u.isActivo(),
                 u.isVerificado(),
-                u.getRole() != null ? u.getRole().getNombre() : null
+                u.getRole() != null ? u.getRole().getNombre() : null,
+                u.getCareer() != null ? u.getCareer().getName() : null
         );
     }
 
@@ -118,6 +123,14 @@ public class UserResponse {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getCareer() {
+        return career;
+    }
+
+    public void setCareer(String career) {
+        this.career = career;
     }
 
 }
