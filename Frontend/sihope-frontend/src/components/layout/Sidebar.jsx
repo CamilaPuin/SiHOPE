@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import Isotype, { Wordmark } from "./Isotype";
+import Isotype from "./Isotype";
 import { useAuth } from "../../hooks/useAuth";
 import { panelByRole } from "../../utils/roles";
 import logo from "../../images/logo-sihope.jpeg";
@@ -16,7 +16,6 @@ export default function Sidebar() {
         <aside className="sidebar">
             <div className="brand-lockup">
                 <Isotype src={logo} negative />
-                <Wordmark negative />
             </div>
 
             <nav className="nav">
@@ -27,9 +26,14 @@ export default function Sidebar() {
                 )}
 
                 {isAdmin && (
-                    <NavLink to="/admin/usuarios" className={linkClass}>
-                        <span className="nav__icon">◈</span> Usuarios y roles
-                    </NavLink>
+                    <>
+                        <NavLink to="/admin/usuarios" className={linkClass}>
+                            <span className="nav__icon">◈</span> Usuarios y roles
+                        </NavLink>
+                        <NavLink to="/admin/asignaturas" className={linkClass}>
+                            <span className="nav__icon">◨</span> Asignaturas
+                        </NavLink>
+                    </>
                 )}
 
                 {role === "MONITOR" && (

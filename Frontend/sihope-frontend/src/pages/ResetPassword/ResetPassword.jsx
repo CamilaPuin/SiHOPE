@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import Isotype, { Wordmark } from "../../components/layout/Isotype";
+import Isotype from "../../components/layout/Isotype";
+import logo from "../../images/logo-sihope.jpeg";
 import Field from "../../components/common/Field";
 import Alert from "../../components/common/Alert";
 import Spinner from "../../components/common/Spinner";
@@ -48,8 +49,7 @@ export default function ResetPassword() {
         <div className="auth-wrap">
             <div className="auth-card" style={{ maxWidth: 480 }}>
                 <div className="auth-card__head">
-                    <Isotype negative />
-                    <Wordmark negative />
+                    <Isotype src={logo} negative />
                 </div>
 
                 <div className="auth-card__body">

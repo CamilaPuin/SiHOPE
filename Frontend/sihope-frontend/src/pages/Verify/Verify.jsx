@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import Isotype, { Wordmark } from "../../components/layout/Isotype";
+import Isotype from "../../components/layout/Isotype";
+import logo from "../../images/logo-sihope.jpeg";
 import Alert from "../../components/common/Alert";
 import { PageLoader } from "../../components/common/Spinner";
 import { verify } from "../../services/registrationService";
@@ -40,8 +41,7 @@ export default function Verify() {
         <div className="auth-wrap">
             <div className="auth-card" style={{ maxWidth: 480 }}>
                 <div className="auth-card__head">
-                    <Isotype negative />
-                    <Wordmark negative />
+                    <Isotype src={logo} negative />
                 </div>
 
                 <div className="auth-card__body">

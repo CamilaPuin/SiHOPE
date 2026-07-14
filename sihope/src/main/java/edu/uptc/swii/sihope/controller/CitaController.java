@@ -71,7 +71,7 @@ public class CitaController {
     public ResponseEntity<ApiResponse<CitaResponse>> create(@RequestBody CreateCitaRequest request,
                                                             AuthenticatedUser authenticated) {
         Result result = citaService.create(authenticated.id(), request.getMonitorId(),
-                request.getAsignaturaId(), request.getDate(), request.getStartTime());
+                request.getAsignaturaId(), request.getDate(), request.getStartTime(), request.getTopic());
         return toResponse(result, HttpStatus.CREATED, "Cita reservada. Se notificó al monitor.");
     }
 

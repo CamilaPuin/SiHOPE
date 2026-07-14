@@ -101,6 +101,11 @@ export default function MyAppointments() {
                 <div className="muted" style={{ fontSize: "0.9rem" }}>
                     {c.esMonitor ? "Estudiante" : "Monitor"}: {counterpart}
                 </div>
+                {c.tema && (
+                    <div className="muted" style={{ fontSize: "0.9rem" }}>
+                        <strong>Tema:</strong> {c.tema}
+                    </div>
+                )}
                 <div className="muted" style={{ fontSize: "0.9rem" }}>
                     {c.fecha} · {hhmm(c.horaInicio)} – {hhmm(c.horaFin)}
                 </div>

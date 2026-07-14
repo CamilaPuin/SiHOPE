@@ -26,6 +26,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     List<User> findDistinctByRole_NameAndSubjects_IdOrderByFirstNameAscLastNameAsc(
             String roleName, Integer subjectId);
 
+    long countBySubjects_Id(Integer subjectId);
+
     default List<User> findByRole_NombreOrderByNombresAscApellidosAsc(String nombreRol) {
         return findByRole_NameOrderByFirstNameAscLastNameAsc(nombreRol);
     }

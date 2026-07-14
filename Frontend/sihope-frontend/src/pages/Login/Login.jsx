@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import Isotype, { Wordmark } from "../../components/layout/Isotype";
+import Isotype from "../../components/layout/Isotype";
+import logo from "../../images/logo-sihope.jpeg";
 import Field from "../../components/common/Field";
 import Alert from "../../components/common/Alert";
 import Spinner from "../../components/common/Spinner";
@@ -71,8 +72,7 @@ export default function Login() {
             <main className="login-card">
                 <section className="login-brand">
                     <div className="login-brand__logo">
-                        <Isotype negative />
-                        <Wordmark negative />
+                        <Isotype src={logo} negative />
                     </div>
                     <div>
                         <p className="login-brand__headline">

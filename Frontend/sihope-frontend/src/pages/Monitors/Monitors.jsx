@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import Alert from "../../components/common/Alert";
 import Spinner from "../../components/common/Spinner";
@@ -156,11 +157,22 @@ export default function Monitors() {
                                     </div>
                                 )}
 
-                                {isStudent && subjects.length > 0 && blocks.length > 0 && (
+                                {isStudent && subjects.length > 0 && (
                                     <button
                                         type="button"
                                         className="btn btn-primary btn-sm mt-16"
-                                        onClick={() => navigate(`/agendar/${m.id}`)}
+                                        onClick={() => {
+                                            if (blocks.length > 0) {
+                                                navigate(`/agendar/${m.id}`);
+                                            } else {
+                                                Swal.fire({
+                                                    icon: "info",
+                                                    title: "Sin horarios disponibles",
+                                                    text: "Este monitor aún no tiene franjas de atención publicadas. Intenta con otro monitor o vuelve más tarde.",
+                                                });
+                                            }
+                                        }}
+                                        disabled={blocks.length === 0}
                                     >
                                         Agendar cita
                                     </button>

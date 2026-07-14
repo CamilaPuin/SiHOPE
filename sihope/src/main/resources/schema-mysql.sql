@@ -91,16 +91,8 @@ CREATE TABLE IF NOT EXISTS monitor_asignatura (
     CONSTRAINT fk_ma_asignatura FOREIGN KEY (asignatura_id) REFERENCES asignatura (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Semilla inicial del catálogo (idempotente).
-INSERT IGNORE INTO asignatura (nombre) VALUES
-    ('Cálculo Diferencial'),
-    ('Cálculo Integral'),
-    ('Álgebra Lineal'),
-    ('Física Mecánica'),
-    ('Programación I'),
-    ('Estructuras de Datos'),
-    ('Bases de Datos'),
-    ('Química General');
+-- El catálogo arranca vacío: el administrador registra las asignaturas desde su panel.
+-- (Las materias de convocatorias existentes se auto-ingieren en DataInitializer.)
 
 -- Citas/monitorías agendadas (HU_002). slot_key con índice UNIQUE evita agendar dos
 -- citas activas en el mismo horario; se pone a NULL al cancelar para liberar el cupo
@@ -113,6 +105,7 @@ CREATE TABLE IF NOT EXISTS cita (
     fecha DATE NOT NULL,
     hora_inicio TIME NOT NULL,
     hora_fin TIME NOT NULL,
+    tema TEXT,
     estado VARCHAR(20) NOT NULL DEFAULT 'RESERVADA',
     motivo_cancelacion VARCHAR(255),
     recordatorio_enviado BOOLEAN NOT NULL DEFAULT FALSE,
