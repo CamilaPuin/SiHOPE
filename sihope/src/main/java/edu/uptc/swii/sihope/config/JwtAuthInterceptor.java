@@ -38,9 +38,6 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
             response.setStatus(HttpServletResponse.SC_OK);
             return true;
         }
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            return true;
-        }
 
         String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith(BEARER)) {
