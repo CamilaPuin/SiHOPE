@@ -98,7 +98,7 @@ public class CitaService {
 
     @Transactional
     public Result create(Integer studentId, Integer monitorId, Integer asignaturaId,
-                         String dateRaw, String startRaw) {
+                         String dateRaw, String startRaw, String topic) {
         LocalDate date = parseDate(dateRaw);
         LocalTime start = parseTime(startRaw);
         if (date == null || start == null) {
@@ -150,6 +150,7 @@ public class CitaService {
         cita.setStudent(student);
         cita.setMonitor(monitor);
         cita.setSubject(subject);
+        cita.setTopic(topic == null ? null : topic.trim());
         cita.setDate(date);
         cita.setStartTime(start);
         cita.setEndTime(end);

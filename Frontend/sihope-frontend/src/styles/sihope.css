@@ -57,7 +57,8 @@ a { color: inherit; }
 .wordmark--neg .si { color: var(--blanco); }
 
 .brand-lockup { display: flex; align-items: center; gap: 12px; }
-.brand-lockup .iso { width: 40px; height: auto; }
+.brand-lockup { display: flex; align-items: center; gap: 12px; }
+.brand-lockup .iso { width: 120px; height: auto; display: block; object-fit: contain; max-width: 100%; border-radius: 8px; }
 .brand-lockup .wordmark { font-size: 1.5rem; }
 
 .app-shell {
@@ -107,14 +108,14 @@ a { color: inherit; }
     grid-area: sidebar;
     background: var(--negro);
     color: var(--blanco);
-    padding: 24px 18px;
+    padding: 20px 18px 24px;
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 20px;
 }
-.sidebar .brand-lockup { padding: 4px 8px 8px; }
-.sidebar .iso { width: 44px; }
-.sidebar .wordmark { font-size: 1.4rem; }
+.sidebar .brand-lockup { padding: 0 8px 8px; }
+.sidebar .iso { width: 100%; height: auto; display: block; object-fit: contain; max-width: 100%; margin: 0 auto; border-radius: 8px; }
+.sidebar .wordmark { font-size: 1.2rem; }
 
 .nav { display: flex; flex-direction: column; gap: 4px; }
 .nav__link {
@@ -472,7 +473,7 @@ input[type="date"], input[type="time"], select, textarea {
     padding: 30px 36px;
     display: flex; align-items: center; gap: 14px;
 }
-.auth-card__head .iso { width: 48px; }
+.auth-card__head .iso { width: 96px; }
 .auth-card__head .wordmark { font-size: 1.5rem; }
 .auth-card__body { padding: 32px 36px; }
 .auth-card__body h1 { font-size: 1.6rem; }

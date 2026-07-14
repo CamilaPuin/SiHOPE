@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import edu.uptc.swii.sihope.domain.Asignatura;
 import edu.uptc.swii.sihope.domain.User;
 import edu.uptc.swii.sihope.repository.AsignaturaRepository;
+import edu.uptc.swii.sihope.repository.CitaRepository;
 import edu.uptc.swii.sihope.repository.UserRepository;
 
 @Service
@@ -21,15 +22,59 @@ public class AsignaturaService {
 
     private final AsignaturaRepository asignaturaRepository;
     private final UserRepository userRepository;
+    private final CitaRepository citaRepository;
 
     public AsignaturaService(AsignaturaRepository asignaturaRepository,
-                             UserRepository userRepository) {
+                             UserRepository userRepository,
+                             CitaRepository citaRepository) {
         this.asignaturaRepository = asignaturaRepository;
         this.userRepository = userRepository;
+        this.citaRepository = citaRepository;
     }
 
     public List<Asignatura> listCatalog() {
         return asignaturaRepository.findAllByOrderByNameAsc();
+    }
+
+    /** Alta manual de una asignatura del catálogo (panel del administrador). */
+    @Transactional
+    public List<String> createSubject(String name) {
+        List<String> errors = new ArrayList<>();
+        String clean = name == null ? "" : name.trim();
+        if (clean.isEmpty()) {
+            errors.add("El nombre de la asignatura es obligatorio.");
+            return errors;
+        }
+        if (asignaturaRepository.existsByNameIgnoreCase(clean)) {
+            errors.add("Ya existe una asignatura con ese nombre.");
+            return errors;
+        }
+        asignaturaRepository.save(new Asignatura(clean));
+        return errors;
+    }
+
+    /**
+     * Elimina una asignatura del catálogo. Se bloquea si algún monitor la atiende
+     * o si hay citas asociadas, para no romper la integridad referencial.
+     */
+    @Transactional
+    public List<String> deleteSubject(Integer id) {
+        List<String> errors = new ArrayList<>();
+        Asignatura asignatura = asignaturaRepository.findById(id).orElse(null);
+        if (asignatura == null) {
+            errors.add("La asignatura no existe.");
+            return errors;
+        }
+        if (userRepository.countBySubjects_Id(id) > 0) {
+            errors.add("No se puede eliminar: hay monitores que atienden esta asignatura.");
+            return errors;
+        }
+        if (citaRepository.countBySubject_Id(id) > 0) {
+            errors.add("No se puede eliminar: hay citas asociadas a esta asignatura.");
+            return errors;
+        }
+        asignaturaRepository.delete(asignatura);
+        return errors;
     }
 
     @Transactional(readOnly = true)

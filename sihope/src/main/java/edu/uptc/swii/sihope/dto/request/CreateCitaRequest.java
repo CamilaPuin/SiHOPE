@@ -16,6 +16,9 @@ public class CreateCitaRequest {
     @JsonProperty("horaInicio")
     private String startTime;
 
+    @JsonProperty("tema")
+    private String topic;
+
     public Integer getMonitorId() {
         return monitorId;
     }
@@ -46,5 +49,13 @@ public class CreateCitaRequest {
 
     public void setStartTime(String startTime) {
         this.startTime = startTime;
+    }
+
+    public String getTopic() {
+        return topic;
+    }
+
+    public void setTopic(String topic) {
+        this.topic = topic;
     }
 }

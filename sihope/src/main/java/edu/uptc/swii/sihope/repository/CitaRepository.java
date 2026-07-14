@@ -26,4 +26,6 @@ public interface CitaRepository extends JpaRepository<Cita, Integer> {
 
     List<Cita> findByStatusAndMonitorIdAndDateBetweenOrderByDateAscStartTimeAsc(
             String status, Integer monitorId, LocalDate from, LocalDate to);
+
+    long countBySubject_Id(Integer subjectId);
 }

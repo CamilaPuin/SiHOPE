@@ -22,6 +22,7 @@ export default function BookAppointment() {
     const [date, setDate] = useState("");
     const [slots, setSlots] = useState([]);
     const [selectedSlot, setSelectedSlot] = useState("");
+    const [topic, setTopic] = useState("");
     const [loading, setLoading] = useState(true);
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [booking, setBooking] = useState(false);
@@ -76,11 +77,11 @@ export default function BookAppointment() {
     };
 
     const confirmBooking = async () => {
-        if (!asignatura || !date || !selectedSlot) {
+        if (!asignatura || !date || !selectedSlot || !topic.trim()) {
             Swal.fire({
                 icon: "info",
                 title: "Faltan datos",
-                text: "Selecciona la asignatura, la fecha y un horario disponible."
+                text: "Selecciona la asignatura, la fecha, un horario disponible y describe el tema a tratar."
             });
             return;
         }
@@ -90,7 +91,8 @@ export default function BookAppointment() {
                 monitorId: Number(monitorId),
                 asignaturaId: Number(asignatura),
                 fecha: date,
-                horaInicio: selectedSlot
+                horaInicio: selectedSlot,
+                tema: topic.trim()
             });
             await Swal.fire({
                 icon: "success",
@@ -145,6 +147,12 @@ export default function BookAppointment() {
 
                     <hr className="divider" />
 
+                    {(monitor.disponibilidad ?? []).length === 0 && (
+                        <Alert type="info">
+                            Este monitor aún no ha publicado franjas de atención. No es posible agendar citas por ahora.
+                        </Alert>
+                    )}
+
                     <div className="field">
                         <label htmlFor="asignatura">Asignatura / temática</label>
                         <select
@@ -164,6 +172,17 @@ export default function BookAppointment() {
                                 Este monitor aún no ha registrado asignaturas.
                             </span>
                         )}
+                    </div>
+
+                    <div className="field">
+                        <label htmlFor="tema">Tema a tratar</label>
+                        <input
+                            id="tema"
+                            type="text"
+                            value={topic}
+                            onChange={(e) => setTopic(e.target.value)}
+                            placeholder="Describe brevemente lo que necesitas resolver"
+                        />
                     </div>
 
                     <div className="field">
@@ -212,7 +231,9 @@ export default function BookAppointment() {
                             type="button"
                             className="btn btn-primary"
                             onClick={confirmBooking}
-                            disabled={booking || !asignatura || !selectedSlot}
+                            disabled={
+                                booking || !asignatura || !selectedSlot || (monitor.disponibilidad ?? []).length === 0
+                            }
                         >
                             {booking ? <Spinner /> : "Confirmar reserva"}
                         </button>

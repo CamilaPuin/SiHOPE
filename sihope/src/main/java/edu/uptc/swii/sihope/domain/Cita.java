@@ -38,6 +38,9 @@ public class Cita {
     @JoinColumn(name = "asignatura_id")
     private Asignatura subject;
 
+    @Column(name = "tema", columnDefinition = "TEXT")
+    private String topic;
+
     @Column(name = "fecha")
     private LocalDate date;
 
@@ -171,5 +174,13 @@ public class Cita {
 
     public void setSlotKey(String slotKey) {
         this.slotKey = slotKey;
+    }
+
+    public String getTopic() {
+        return topic;
+    }
+
+    public void setTopic(String topic) {
+        this.topic = topic;
     }
 }

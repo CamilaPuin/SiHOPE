@@ -33,8 +33,16 @@
     gap: 16px;
 }
 .login-brand__logo .iso {
-    width: 84px;
+    width: 100%;
     height: auto;
+    display: block;
+    object-fit: contain;
+    max-width: 100%;
+    margin-right: 8px;
+}
+/* keep mobile rule */
+@media (max-width: 760px) {
+    .login-brand__logo .iso { width: 200px; }
 }
 .login-brand__logo .wordmark {
     font-size: 2.4rem;
@@ -118,6 +126,7 @@
     .login-brand__logo {
         justify-content: center;
     }
+    .login-brand__logo .iso { width: 84px; }
     .login-brand__text {
         max-width: none;
     }
