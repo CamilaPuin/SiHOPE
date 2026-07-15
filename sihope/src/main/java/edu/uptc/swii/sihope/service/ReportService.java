@@ -109,9 +109,9 @@ public class ReportService {
             writeRow(porTema, 0, header, "Asignatura", "Citas atendidas");
             fillRows(porTema, header, report.bySubject());
 
-            autosize(resumen, 2);
-            autosize(porMonitor, 2);
-            autosize(porTema, 2);
+            widen(resumen, 2);
+            widen(porMonitor, 2);
+            widen(porTema, 2);
 
             if (report.details() != null && !report.details().isEmpty()) {
                 Sheet detalle = wb.createSheet("Detalle de citas atendidas");
@@ -121,7 +121,7 @@ public class ReportService {
                     writeRow(detalle, i++, null, d.student(), d.subject(), d.date(),
                             d.startTime(), d.endTime());
                 }
-                autosize(detalle, 5);
+                widen(detalle, 5);
             }
 
             wb.write(out);
@@ -291,10 +291,9 @@ public class ReportService {
             }
         }
     }
-
-    private void autosize(Sheet sheet, int columns) {
+   private void widen(Sheet sheet, int columns) {
         for (int c = 0; c < columns; c++) {
-            sheet.autoSizeColumn(c);
+            sheet.setColumnWidth(c, 24 * 256); 
         }
     }
 
