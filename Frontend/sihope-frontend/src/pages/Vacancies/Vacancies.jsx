@@ -36,8 +36,9 @@ const APPLICATION_FIELDS = [
         required: true,
         placeholder: "4.2",
         inputMode: "decimal",
-        step: "0.01",
-        min: "0"
+        step: "0.1",
+        min: "0",
+        max: "5"
     },
     {
         key: "semestre",
@@ -47,7 +48,8 @@ const APPLICATION_FIELDS = [
         placeholder: "6",
         inputMode: "numeric",
         step: "1",
-        min: "1"
+        min: "1",
+        max: "12"
     },
     {
         key: "motivacion",
@@ -60,8 +62,22 @@ const APPLICATION_FIELDS = [
 
 const NUMERIC_FIELDS = new Set(["promedio", "semestre"]);
 const NUMERIC_VALIDATORS = {
-    promedio: (value) => /^\d+(\.\d+)?$/.test(value),
+    promedio: (value) => /^\d+(\.\d?)?$/.test(value),
     semestre: (value) => /^\d+$/.test(value)
+};
+const RANGE_VALIDATORS = {
+    promedio: (value) => {
+        const n = Number(value);
+        return n >= 0 && n <= 5;
+    },
+    semestre: (value) => {
+        const n = Number(value);
+        return n >= 1 && n <= 12;
+    }
+};
+const RANGE_MESSAGES = {
+    promedio: "El promedio debe estar entre 0 y 5.",
+    semestre: "El semestre debe estar entre 1 y 12."
 };
 
 const initialFormState = () =>
@@ -139,6 +155,9 @@ export default function Vacancies() {
             if (!isValid) {
                 return;
             }
+            if (value !== "" && !RANGE_VALIDATORS[key](value)) {
+                return;
+            }
         }
 
         setForm((prev) => ({ ...prev, [key]: value }));
@@ -157,8 +176,12 @@ export default function Vacancies() {
                 missing[c.key] = "Este campo es obligatorio.";
             }
 
-            if (NUMERIC_FIELDS.has(c.key) && value && !NUMERIC_VALIDATORS[c.key](value)) {
-                invalid[c.key] = "Este campo solo acepta números.";
+            if (NUMERIC_FIELDS.has(c.key) && value) {
+                if (!NUMERIC_VALIDATORS[c.key](value)) {
+                    invalid[c.key] = "Este campo solo acepta números.";
+                } else if (!RANGE_VALIDATORS[c.key](value)) {
+                    invalid[c.key] = RANGE_MESSAGES[c.key];
+                }
             }
         });
 

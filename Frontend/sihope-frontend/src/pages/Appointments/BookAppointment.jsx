@@ -20,6 +20,7 @@ export default function BookAppointment() {
     const [monitor, setMonitor] = useState(null);
     const [asignatura, setAsignatura] = useState("");
     const [date, setDate] = useState("");
+    const [duration, setDuration] = useState(60);
     const [slots, setSlots] = useState([]);
     const [selectedSlot, setSelectedSlot] = useState("");
     const [topic, setTopic] = useState("");
@@ -59,12 +60,12 @@ export default function BookAppointment() {
             .filter(Boolean);
     }, [monitor, catalog]);
 
-    const loadSlots = (d) => {
+    const loadSlots = (d, dur = duration) => {
         setSelectedSlot("");
         setSlots([]);
         if (!d) return;
         setLoadingSlots(true);
-        freeSlots(monitorId, d)
+        freeSlots(monitorId, d, dur)
             .then((res) => setSlots(res.data ?? []))
             .catch((err) => setError(err.message))
             .finally(() => setLoadingSlots(false));
@@ -74,6 +75,12 @@ export default function BookAppointment() {
         const d = e.target.value;
         setDate(d);
         loadSlots(d);
+    };
+
+    const onDurationChange = (e) => {
+        const dur = Number(e.target.value);
+        setDuration(dur);
+        loadSlots(date, dur);
     };
 
     const confirmBooking = async () => {
@@ -92,7 +99,8 @@ export default function BookAppointment() {
                 asignaturaId: Number(asignatura),
                 fecha: date,
                 horaInicio: selectedSlot,
-                tema: topic.trim()
+                tema: topic.trim(),
+                duracion: duration
             });
             await Swal.fire({
                 icon: "success",
@@ -183,6 +191,18 @@ export default function BookAppointment() {
                             onChange={(e) => setTopic(e.target.value)}
                             placeholder="Describe brevemente lo que necesitas resolver"
                         />
+                    </div>
+
+                    <div className="field">
+                        <label htmlFor="duracion">Duración</label>
+                        <select
+                            id="duracion"
+                            value={duration}
+                            onChange={onDurationChange}
+                        >
+                            <option value={30}>30 minutos</option>
+                            <option value={60}>1 hora</option>
+                        </select>
                     </div>
 
                     <div className="field">

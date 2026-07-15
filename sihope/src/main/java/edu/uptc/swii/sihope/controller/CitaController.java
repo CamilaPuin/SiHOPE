@@ -40,11 +40,13 @@ public class CitaController {
 
     @GetMapping("/api/monitores/{monitorId}/horarios-disponibles")
     @Operation(summary = "Horarios libres de un monitor para una fecha",
-            description = "Devuelve las franjas de 1 hora disponibles (dentro de la disponibilidad del "
-                    + "monitor, sin las ya reservadas ni las pasadas) para la fecha indicada.")
+            description = "Devuelve las franjas disponibles (de 30 o 60 min según la duración indicada, "
+                    + "dentro de la disponibilidad del monitor, sin las que se cruzan con citas ya "
+                    + "reservadas ni las pasadas) para la fecha indicada.")
     public ResponseEntity<ApiResponse<List<TimeBlock>>> freeSlots(
             @PathVariable Integer monitorId,
-            @RequestParam("fecha") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) String fecha) {
+            @RequestParam("fecha") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) String fecha,
+            @RequestParam(value = "duracion", required = false) Integer duracion) {
         LocalDate date;
         try {
             date = LocalDate.parse(fecha);
@@ -52,8 +54,10 @@ public class CitaController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("La fecha debe tener el formato yyyy-MM-dd."));
         }
-        return ResponseEntity.ok(ApiResponse.ok("Horarios disponibles obtenidos.",
-                citaService.freeSlots(monitorId, date)));
+        List<TimeBlock> slots = (duracion == null)
+                ? citaService.freeSlots(monitorId, date)
+                : citaService.freeSlots(monitorId, date, duracion);
+        return ResponseEntity.ok(ApiResponse.ok("Horarios disponibles obtenidos.", slots));
     }
 
     @GetMapping("/api/citas")
@@ -71,7 +75,8 @@ public class CitaController {
     public ResponseEntity<ApiResponse<CitaResponse>> create(@RequestBody CreateCitaRequest request,
                                                             AuthenticatedUser authenticated) {
         Result result = citaService.create(authenticated.id(), request.getMonitorId(),
-                request.getAsignaturaId(), request.getDate(), request.getStartTime(), request.getTopic());
+                request.getAsignaturaId(), request.getDate(), request.getStartTime(),
+                request.getTopic(), request.getDuration());
         return toResponse(result, HttpStatus.CREATED, "Cita reservada. Se notificó al monitor.");
     }
 

@@ -279,13 +279,18 @@ input[type="date"], input[type="time"], select, textarea {
     transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
-.swal2-container .swal2-input,
+textarea {
+    resize: none;
+    overflow-y: auto;
+}
 .swal2-container .swal2-textarea {
-    width: 100%;
+    width: auto;
     max-width: 100%;
     box-sizing: border-box;
+    margin-left: 1.5em;
+    margin-right: 1.5em;
     padding: 10px 12px;
-    resize: vertical;
+    resize: none;
     min-height: 96px;
     max-height: 140px;
     overflow-y: auto;

@@ -132,8 +132,8 @@ export default function CoordinatorReports() {
                                 Reporte de citas atendidas
                             </div>
                             <div className="report-brand__line">
-                                <strong>Periodo:</strong> {formatDate(report.from)} —{" "}
-                                {formatDate(report.to)}
+                                <strong>Periodo:</strong> {formatDate(report.desde)} —{" "}
+                                {formatDate(report.hasta)}
                             </div>
                             <div className="report-brand__line">
                                 <strong>Monitor:</strong>{" "}

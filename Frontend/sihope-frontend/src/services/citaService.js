@@ -1,8 +1,10 @@
 import api from "./api";
 
-export const freeSlots = (monitorId, fecha) =>
+export const freeSlots = (monitorId, fecha, duracion) =>
     api
-        .get(`/api/monitores/${monitorId}/horarios-disponibles`, { params: { fecha } })
+        .get(`/api/monitores/${monitorId}/horarios-disponibles`, {
+            params: duracion ? { fecha, duracion } : { fecha }
+        })
         .then((r) => r.data);
 
 export const myCitas = () => api.get("/api/citas").then((r) => r.data);
