@@ -146,12 +146,26 @@ public class EmailService {
             return;
         }
         try {
+            boolean useSsl = mailPort == 465;
             Properties props = new Properties();
             props.put("mail.smtp.host", mailHost);
             props.put("mail.smtp.port", String.valueOf(mailPort));
             props.put("mail.smtp.auth", smtpAuth);
-            props.put("mail.smtp.starttls.enable", starttlsEnabled);
-            props.put("mail.smtp.starttls.required", starttlsRequired);
+            // Timeouts explícitos: si el puerto está bloqueado (p. ej. 587 en algunos
+            // hosts) el envío falla rápido en vez de colgarse indefinidamente.
+            props.put("mail.smtp.connectiontimeout", "10000");
+            props.put("mail.smtp.timeout", "10000");
+            props.put("mail.smtp.writetimeout", "10000");
+            if (useSsl) {
+                // Puerto 465: SSL/TLS directo desde el inicio de la conexión.
+                props.put("mail.smtp.ssl.enable", "true");
+                props.put("mail.smtp.socketFactory.port", String.valueOf(mailPort));
+                props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+            } else {
+                // Puerto 587: conexión en claro que se eleva a TLS con STARTTLS.
+                props.put("mail.smtp.starttls.enable", starttlsEnabled);
+                props.put("mail.smtp.starttls.required", starttlsRequired);
+            }
             if (!smtpSslTrust.isBlank()) {
                 props.put("mail.smtp.ssl.trust", smtpSslTrust);
                 props.put("mail.smtp.ssl.checkserveridentity", "false");
