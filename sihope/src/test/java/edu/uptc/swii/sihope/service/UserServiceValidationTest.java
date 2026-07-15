@@ -179,7 +179,7 @@ class UserServiceValidationTest {
         UserDTO dto = validDto();
         dto.setFirstName("An4");
         dto.setLastName("G0mez!");
-        Map<String, String> errors = service.registerStudent(dto);
+        Map<String, String> errors = service.registerStudent(dto, 1);
         assertTrue(errors.containsKey("nombres"));
         assertTrue(errors.containsKey("apellidos"));
     }
@@ -188,19 +188,47 @@ class UserServiceValidationTest {
     void registerRejectsInvalidCode() {
         UserDTO dto = validDto();
         dto.setStudentCode("2023-12345");
-        Map<String, String> errors = service.registerStudent(dto);
+        Map<String, String> errors = service.registerStudent(dto, 1);
         assertTrue(errors.containsKey("codigo"));
     }
 
     @Test
+    void registerRequiresCareer() {
+        Map<String, String> errors = service.registerStudent(validDto(), null);
+        assertTrue(errors.containsKey("carrera"));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void registerRejectsDuplicateFullName() {
+        User existing = new User();
+        existing.setFirstName("Ana");
+        existing.setLastName("Gómez");
+        when(userRepository.findAll()).thenReturn(java.util.List.of(existing));
+        Carrera carrera = new Carrera("Ingeniería de Sistemas y Computación");
+        carrera.setId(1);
+        when(carreraRepository.findById(1)).thenReturn(Optional.of(carrera));
+
+        Map<String, String> errors = service.registerStudent(validDto(), 1);
+
+        assertTrue(errors.containsKey("apellidos"));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
     void registerAcceptsValidData() {
+        Carrera carrera = new Carrera("Ingeniería de Sistemas y Computación");
+        carrera.setId(1);
+        when(carreraRepository.findById(1)).thenReturn(Optional.of(carrera));
         when(userRepository.existsByStudentCode(anyString())).thenReturn(false);
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(roleRepository.findByName("ESTUDIANTE")).thenReturn(new Role("ESTUDIANTE"));
 
-        Map<String, String> errors = service.registerStudent(validDto());
+        Map<String, String> errors = service.registerStudent(validDto(), 1);
 
         assertTrue(errors.isEmpty());
-        verify(userRepository).save(any(User.class));
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        assertEquals(carrera, captor.getValue().getCareer());
     }
 }

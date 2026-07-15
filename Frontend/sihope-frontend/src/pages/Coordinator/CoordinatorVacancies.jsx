@@ -13,6 +13,8 @@ import {
 } from "../../services/vacancyService";
 import { listAsignaturas } from "../../services/asignaturaService";
 
+const TODAY = new Date().toLocaleDateString("en-CA");
+
 const INITIAL_FORM = {
     titulo: "",
     materiaIds: [],
@@ -205,6 +207,7 @@ export default function CoordinatorVacancies() {
         try {
             const res = await promoteToMonitor(p.id);
             await reloadApplications();
+            await load();
             Swal.fire({
                 icon: "success",
                 title: "Monitor asignado",
@@ -258,6 +261,7 @@ export default function CoordinatorVacancies() {
                             label="Fecha límite"
                             id="fechaLimite"
                             type="date"
+                            min={TODAY}
                             value={form.fechaLimite}
                             onChange={update("fechaLimite")}
                             error={errors.fechaLimite}

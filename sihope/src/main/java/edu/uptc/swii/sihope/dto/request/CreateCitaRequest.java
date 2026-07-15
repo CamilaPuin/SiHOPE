@@ -19,6 +19,9 @@ public class CreateCitaRequest {
     @JsonProperty("tema")
     private String topic;
 
+    @JsonProperty("duracion")
+    private Integer duration;
+
     public Integer getMonitorId() {
         return monitorId;
     }
@@ -57,5 +60,13 @@ public class CreateCitaRequest {
 
     public void setTopic(String topic) {
         this.topic = topic;
+    }
+
+    public Integer getDuration() {
+        return duration;
+    }
+
+    public void setDuration(Integer duration) {
+        this.duration = duration;
     }
 }

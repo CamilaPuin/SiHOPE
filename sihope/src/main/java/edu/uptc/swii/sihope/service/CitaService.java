@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -29,7 +28,9 @@ import edu.uptc.swii.sihope.repository.UserRepository;
 public class CitaService {
 
     private static final String MONITOR_ROLE = "MONITOR";
-    private static final int SLOT_MINUTES = 60;
+    private static final int STEP_MINUTES = 30;
+    private static final Set<Integer> ALLOWED_DURATIONS = Set.of(30, 60);
+    private static final int DEFAULT_DURATION = 60;
     private static final long MIN_CANCEL_HOURS = 2;
     private static final List<String> ACTIVE = List.of(Cita.RESERVADA, Cita.CONFIRMADA);
 
@@ -66,45 +67,56 @@ public class CitaService {
    
     @Transactional(readOnly = true)
     public List<TimeBlock> freeSlots(Integer monitorId, LocalDate date) {
+        return freeSlots(monitorId, date, DEFAULT_DURATION);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TimeBlock> freeSlots(Integer monitorId, LocalDate date, int durationMinutes) {
         List<TimeBlock> free = new ArrayList<>();
         if (date == null || date.isBefore(LocalDate.now())) {
             return free;
         }
-        int weekday = date.getDayOfWeek().getValue(); 
+        int duration = ALLOWED_DURATIONS.contains(durationMinutes) ? durationMinutes : DEFAULT_DURATION;
+        int weekday = date.getDayOfWeek().getValue();
         List<Availability> blocks = availabilityRepository
                 .findByMonitorIdOrderByDayOfWeekAscStartTimeAsc(monitorId).stream()
                 .filter(a -> a.getDayOfWeek() == weekday)
                 .toList();
 
-        Set<LocalTime> booked = citaRepository
-                .findByMonitorIdAndDateAndStatusIn(monitorId, date, ACTIVE).stream()
-                .map(Cita::getStartTime)
-                .collect(Collectors.toSet());
+        List<Cita> bookedCitas = citaRepository
+                .findByMonitorIdAndDateAndStatusIn(monitorId, date, ACTIVE);
 
         LocalDateTime now = LocalDateTime.now();
         for (Availability b : blocks) {
             LocalTime start = b.getStartTime();
-            while (!start.plusMinutes(SLOT_MINUTES).isAfter(b.getEndTime())) {
-                LocalTime end = start.plusMinutes(SLOT_MINUTES);
+            while (!start.plusMinutes(duration).isAfter(b.getEndTime())) {
+                LocalTime end = start.plusMinutes(duration);
                 boolean past = LocalDateTime.of(date, start).isBefore(now);
-                if (!booked.contains(start) && !past) {
+                if (!overlapsBooked(bookedCitas, start, end) && !past) {
                     free.add(new TimeBlock(weekday, start.toString(), end.toString()));
                 }
-                start = end;
+                start = start.plusMinutes(STEP_MINUTES);
             }
         }
         return free;
     }
 
+    private boolean overlapsBooked(List<Cita> bookedCitas, LocalTime start, LocalTime end) {
+        return bookedCitas.stream()
+                .anyMatch(c -> start.isBefore(c.getEndTime()) && end.isAfter(c.getStartTime()));
+    }
+
     @Transactional
     public Result create(Integer studentId, Integer monitorId, Integer asignaturaId,
-                         String dateRaw, String startRaw, String topic) {
+                         String dateRaw, String startRaw, String topic, Integer durationRaw) {
         LocalDate date = parseDate(dateRaw);
         LocalTime start = parseTime(startRaw);
         if (date == null || start == null) {
             return Result.error("Fecha u hora inválidas.");
         }
-        LocalTime end = start.plusMinutes(SLOT_MINUTES);
+        int duration = (durationRaw != null && ALLOWED_DURATIONS.contains(durationRaw))
+                ? durationRaw : DEFAULT_DURATION;
+        LocalTime end = start.plusMinutes(duration);
 
         User student = userRepository.findById(studentId).orElse(null);
         if (student == null) {
@@ -137,14 +149,16 @@ public class CitaService {
 
         if (!fitsAvailability(monitorId, date.getDayOfWeek().getValue(), start, end)) {
             return Result.conflict("El horario seleccionado no está dentro de la disponibilidad del monitor.",
-                    freeSlots(monitorId, date));
+                    freeSlots(monitorId, date, duration));
+        }
+
+        List<Cita> bookedCitas = citaRepository.findByMonitorIdAndDateAndStatusIn(monitorId, date, ACTIVE);
+        if (overlapsBooked(bookedCitas, start, end)) {
+            return Result.conflict("Ese horario se cruza con otra cita. Elige otro de los disponibles.",
+                    freeSlots(monitorId, date, duration));
         }
 
         String slotKey = Cita.buildSlotKey(monitorId, date, start);
-        if (citaRepository.existsBySlotKey(slotKey)) {
-            return Result.conflict("Ese horario ya está reservado. Elige otro de los disponibles.",
-                    freeSlots(monitorId, date));
-        }
 
         Cita cita = new Cita();
         cita.setStudent(student);
@@ -163,7 +177,7 @@ public class CitaService {
             citaRepository.saveAndFlush(cita);
         } catch (DataIntegrityViolationException e) {
             return Result.conflict("Ese horario acaba de ser reservado. Elige otro de los disponibles.",
-                    freeSlots(monitorId, date));
+                    freeSlots(monitorId, date, duration));
         }
 
         emailService.sendCitaReservada(monitor.getEmail(), fullName(student),

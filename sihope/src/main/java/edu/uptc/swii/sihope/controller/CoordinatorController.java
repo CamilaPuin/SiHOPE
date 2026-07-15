@@ -148,6 +148,10 @@ public class CoordinatorController {
             applicationService.markMonitorAssigned(application);
             asignaturaService.assignVacancySubjects(application.getAspirante().getId(),
                     vacancy);
+            if (vacancy != null
+                    && applicationService.countAssignedMonitors(vacancy.getId()) >= vacancy.getSlots()) {
+                vacancyService.close(vacancy.getId());
+            }
         }
         return switch (result) {
             case OK -> ResponseEntity.ok(ApiResponse.ok(

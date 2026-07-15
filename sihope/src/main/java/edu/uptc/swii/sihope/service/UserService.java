@@ -1,5 +1,6 @@
 package edu.uptc.swii.sihope.service;
 
+import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -112,18 +113,53 @@ public class UserService {
         return s != null && CODE_PATTERN.matcher(s.trim()).matches();
     }
 
-    public Map<String, String> registerStudent(UserDTO dto) {
+    // Normaliza un nombre completo para comparar: sin tildes/diacríticos, minúsculas,
+    // espacios colapsados. Así "Juan Manuel Ojeda Sanchez" y "Juán  Manuel Ojeda Sánchez"
+    // se consideran el mismo nombre, sin importar cómo se dividan en nombres/apellidos.
+    private String normalizeName(String s) {
+        if (s == null) {
+            return "";
+        }
+        String noAccents = Normalizer.normalize(s, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+        return noAccents.trim().toLowerCase().replaceAll("\\s+", " ");
+    }
+
+    private boolean fullNameExists(String firstName, String lastName) {
+        String target = normalizeName((firstName == null ? "" : firstName) + " "
+                + (lastName == null ? "" : lastName));
+        if (target.isBlank()) {
+            return false;
+        }
+        return userRepository.findAll().stream()
+                .anyMatch(u -> normalizeName(
+                        (u.getFirstName() == null ? "" : u.getFirstName()) + " "
+                                + (u.getLastName() == null ? "" : u.getLastName()))
+                        .equals(target));
+    }
+
+    public Map<String, String> registerStudent(UserDTO dto, Integer careerId) {
         Map<String, String> errors = new LinkedHashMap<>();
 
+        boolean firstNameOk = false;
+        boolean lastNameOk = false;
         if (isBlank(dto.getFirstName())) {
             errors.put("nombres", "Ingresa tus nombres.");
         } else if (!isValidName(dto.getFirstName())) {
             errors.put("nombres", "Los nombres solo pueden contener letras y espacios (máx. 50 caracteres).");
+        } else {
+            firstNameOk = true;
         }
         if (isBlank(dto.getLastName())) {
             errors.put("apellidos", "Ingresa tus apellidos.");
         } else if (!isValidName(dto.getLastName())) {
             errors.put("apellidos", "Los apellidos solo pueden contener letras y espacios (máx. 50 caracteres).");
+        } else {
+            lastNameOk = true;
+        }
+        if (firstNameOk && lastNameOk
+                && fullNameExists(dto.getFirstName(), dto.getLastName())) {
+            errors.put("apellidos", "Ya existe un usuario con ese nombre y apellidos.");
         }
 
         if (isBlank(dto.getStudentCode())) {
@@ -138,6 +174,16 @@ public class UserService {
             errors.put("correo", "Debes usar un correo institucional de la UPTC (" + UPTC_DOMAIN + ").");
         } else if (userRepository.existsByEmail(dto.getEmail().trim())) {
             errors.put("correo", "Este correo ya tiene una cuenta registrada.");
+        }
+
+        Carrera career = null;
+        if (careerId == null) {
+            errors.put("carrera", "Selecciona tu carrera.");
+        } else {
+            career = carreraRepository.findById(careerId).orElse(null);
+            if (career == null) {
+                errors.put("carrera", "La carrera seleccionada no existe.");
+            }
         }
 
         if (!isPasswordValid(dto.getPassword())) {
@@ -164,6 +210,7 @@ public class UserService {
         u.setVerified(false);
         u.setVerificationToken(token);
         u.setRole(studentRole);
+        u.setCareer(career);
         userRepository.save(u);
 
         emailService.sendVerification(u.getEmail(), token);
@@ -194,6 +241,8 @@ public class UserService {
             errors.put("nombre", "El nombre es obligatorio.");
         } else if (!isValidName(fullName)) {
             errors.put("nombre", "El nombre solo puede contener letras y espacios (máx. 50 caracteres).");
+        } else if (fullNameExists(fullName, "")) {
+            errors.put("nombre", "Ya existe un usuario con ese nombre y apellidos.");
         }
         if (isBlank(studentCode)) {
             errors.put("documento", "El documento/código es obligatorio.");
