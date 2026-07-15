@@ -1,6 +1,6 @@
 const DAYS = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
-export const dayName = (n) => DAYS[n] ?? "—";
+export const dayName = (n) => DAYS[n] ?? "-";
 
 export const hhmm = (hora) => (hora ? String(hora).slice(0, 5) : "");
 

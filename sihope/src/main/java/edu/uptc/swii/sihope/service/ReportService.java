@@ -168,11 +168,6 @@ public class ReportService {
         }
     }
 
-    /**
-     * Dibuja el membrete del PDF: logo de SiHope (si está disponible en el classpath)
-     * junto al título y los datos del periodo. Si el logo no puede cargarse, el reporte
-     * se genera igual solo con el texto.
-     */
     private void addLetterhead(Document doc, CitasReportResponse report, Font title, Font normal)
             throws Exception {
         Image logo = loadLogo();
@@ -305,7 +300,7 @@ public class ReportService {
 
     private CitaDetailRow detailRow(Cita c) {
         return new CitaDetailRow(
-                c.getStudent() == null ? "—" : fullName(c.getStudent().getFirstName(),
+                c.getStudent() == null ? "-" : fullName(c.getStudent().getFirstName(),
                         c.getStudent().getLastName()),
                 subjectName(c),
                 c.getDate() == null ? "" : c.getDate().toString(),
@@ -327,12 +322,12 @@ public class ReportService {
     }
 
     private String monitorName(Cita c) {
-        return c.getMonitor() == null ? "—" : fullName(c.getMonitor().getFirstName(),
+        return c.getMonitor() == null ? "-" : fullName(c.getMonitor().getFirstName(),
                 c.getMonitor().getLastName());
     }
 
     private String subjectName(Cita c) {
-        return c.getSubject() == null ? "—" : c.getSubject().getName();
+        return c.getSubject() == null ? "-" : c.getSubject().getName();
     }
 
     private String fullName(String first, String last) {

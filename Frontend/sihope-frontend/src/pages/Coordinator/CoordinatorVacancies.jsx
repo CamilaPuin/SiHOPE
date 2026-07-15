@@ -403,10 +403,10 @@ export default function CoordinatorVacancies() {
                             visible para los aspirantes.
                         </div>
                         <div className="schedule">
-                            <div className="schedule__row"><span>Título</span><span><strong>{form.titulo || "—"}</strong></span></div>
-                            <div className="schedule__row"><span>Materias</span><span>{materiaNames.length > 0 ? materiaNames.join(", ") : "—"}</span></div>
-                            <div className="schedule__row"><span>Plazas</span><span>{form.plazas || "—"}</span></div>
-                            <div className="schedule__row"><span>Fecha límite</span><span>{form.fechaLimite || "—"}</span></div>
+                            <div className="schedule__row"><span>Título</span><span><strong>{form.titulo || "-"}</strong></span></div>
+                            <div className="schedule__row"><span>Materias</span><span>{materiaNames.length > 0 ? materiaNames.join(", ") : "-"}</span></div>
+                            <div className="schedule__row"><span>Plazas</span><span>{form.plazas || "-"}</span></div>
+                            <div className="schedule__row"><span>Fecha límite</span><span>{form.fechaLimite || "-"}</span></div>
                         </div>
                         {form.requisitos && (
                             <p className="muted" style={{ marginTop: 12 }}>
