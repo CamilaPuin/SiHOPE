@@ -137,7 +137,7 @@ export default function BookAppointment() {
                 <h1>Agendar cita</h1>
                 <p>
                     Reserva una monitoría con {monitor?.nombre ?? "el monitor"}. Elige la
-                    temática, la fecha y un horario disponible.
+                    asignatura, la fecha y un horario disponible.
                 </p>
             </div>
 

@@ -98,14 +98,14 @@ export default function AdminSubjects() {
                 <h1>Asignaturas</h1>
                 <p>
                     Administra el catálogo de asignaturas del programa. Los monitores solo
-                    podrán ofrecer temáticas registradas aquí.
+                    podrán ofrecer materias registradas aquí.
                 </p>
             </div>
 
             <section className="card" style={{ marginBottom: 28 }}>
                 <div className="card__title">Registrar asignatura</div>
                 <div className="card__subtitle">
-                    Añade una nueva temática al catálogo. No se permiten nombres duplicados.
+                    Añade una nueva asignatura al catálogo. No se permiten nombres duplicados.
                 </div>
 
                 <Alert type="error">{createError}</Alert>

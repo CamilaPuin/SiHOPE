@@ -6,11 +6,19 @@ import { citasReport, downloadReport } from "../../services/reportService";
 import { listMonitors } from "../../services/availabilityService";
 import logo from "../../images/logo-sihope-fondoblanco.jpg";
 
+// Formatea una fecha local como yyyy-MM-dd SIN pasar por UTC (toISOString convierte a UTC
+// y en zonas con offset negativo, como Colombia UTC-5, puede devolver el día anterior).
+const toLocalISO = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+};
 const firstOfMonth = () => {
     const d = new Date();
-    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+    return toLocalISO(new Date(d.getFullYear(), d.getMonth(), 1));
 };
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => toLocalISO(new Date());
 
 const formatDate = (iso) => {
     if (!iso) return "";
@@ -24,6 +32,10 @@ export default function CoordinatorReports() {
     const [monitorId, setMonitorId] = useState("");
     const [monitors, setMonitors] = useState([]);
     const [report, setReport] = useState(null);
+    // Parámetros con los que se generó el reporte actualmente mostrado. Se "congelan" al
+    // generar para que el encabezado y las descargas usen SIEMPRE el periodo consultado,
+    // aunque el usuario cambie los inputs después.
+    const [applied, setApplied] = useState(null);
     const [loading, setLoading] = useState(false);
     const [downloading, setDownloading] = useState("");
     const [error, setError] = useState("");
@@ -42,20 +54,30 @@ export default function CoordinatorReports() {
         setError("");
         setLoading(true);
         try {
-            const res = await citasReport(desde, hasta, monitorId || undefined);
+            const monitor = monitorId || undefined;
+            const res = await citasReport(desde, hasta, monitor);
             setReport(res.data);
+            // Congelamos el periodo/monitor efectivamente consultados.
+            setApplied({ desde, hasta, monitorId });
         } catch (err) {
             setError(err.message);
             setReport(null);
+            setApplied(null);
         } finally {
             setLoading(false);
         }
     };
 
     const doDownload = async (formato) => {
+        if (!applied) return;
         setDownloading(formato);
         try {
-            await downloadReport(desde, hasta, formato, monitorId || undefined);
+            await downloadReport(
+                applied.desde,
+                applied.hasta,
+                formato,
+                applied.monitorId || undefined
+            );
         } catch (err) {
             Swal.fire({ icon: "error", title: "No se pudo descargar", text: err.message });
         } finally {
@@ -132,14 +154,15 @@ export default function CoordinatorReports() {
                                 Reporte de citas atendidas
                             </div>
                             <div className="report-brand__line">
-                                <strong>Periodo:</strong> {formatDate(report.desde)} —{" "}
+                                <strong>Periodo:</strong> {formatDate(report.desde)} -{" "}
                                 {formatDate(report.hasta)}
                             </div>
                             <div className="report-brand__line">
                                 <strong>Monitor:</strong>{" "}
-                                {monitorId
-                                    ? monitors.find((m) => String(m.id) === String(monitorId))?.nombre
-                                        ?? "—"
+                                {applied?.monitorId
+                                    ? monitors.find(
+                                          (m) => String(m.id) === String(applied.monitorId)
+                                      )?.nombre ?? "-"
                                     : "Todos los monitores"}
                             </div>
                         </div>

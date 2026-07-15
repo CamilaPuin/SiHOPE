@@ -225,7 +225,8 @@ public class EmailService {
     private MimeMessage buildMime(Session session, String recipient, String subject, String htmlBody) throws Exception {
         MimeMessage mime = new MimeMessage(session);
         if (sender != null && !sender.isBlank()) {
-            mime.setFrom(new InternetAddress(sender));
+            // Nombre visible "SiHope" + la dirección remitente configurada en MAIL_FROM.
+            mime.setFrom(new InternetAddress(sender, "SiHope", StandardCharsets.UTF_8.name()));
         }
         mime.addRecipient(MimeMessage.RecipientType.TO, new InternetAddress(recipient));
         mime.setSubject(subject, StandardCharsets.UTF_8.name());

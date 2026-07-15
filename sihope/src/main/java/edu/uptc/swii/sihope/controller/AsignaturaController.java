@@ -17,7 +17,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api/asignaturas")
 @Tag(name = "Asignaturas",
-        description = "Catálogo de asignaturas/temáticas del programa (Paso 0, sustenta HU_004 y HU_002).")
+        description = "Catálogo de asignaturas del programa (Paso 0, sustenta HU_004 y HU_002).")
 public class AsignaturaController {
 
     private final AsignaturaService asignaturaService;

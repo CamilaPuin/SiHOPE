@@ -314,7 +314,7 @@ public class UserService {
                 && userRepository.countByRole_NameAndActiveTrueAndIdNot("ADMINISTRADOR", userId) == 0) {
             return RoleChangeResult.LAST_ADMIN;
         }
-        String previousRole = u.getRole() != null ? u.getRole().getName() : "—";
+        String previousRole = u.getRole() != null ? u.getRole().getName() : "-";
         u.setRole(getOrCreateRole(roleName));
         u.setTokenVersion(u.getTokenVersion() + 1);
         userRepository.save(u);
@@ -357,7 +357,7 @@ public class UserService {
         if (!applicationRepository.existsByApplicantIdAndState(userId, Application.APROBADA)) {
             return PromotionResult.NOT_APPROVED;
         }
-        String previousRole = u.getRole() != null ? u.getRole().getName() : "—";
+        String previousRole = u.getRole() != null ? u.getRole().getName() : "-";
         u.setRole(getOrCreateRole("MONITOR"));
         u.setTokenVersion(u.getTokenVersion() + 1);
         userRepository.save(u);

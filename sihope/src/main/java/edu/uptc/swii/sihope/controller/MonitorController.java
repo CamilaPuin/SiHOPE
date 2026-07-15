@@ -71,7 +71,7 @@ public class MonitorController {
     @GetMapping("/api/monitores")
     @Operation(summary = "Directorio de monitores",
             description = "Lista los monitores con sus asignaturas y franjas horarias. Con el parámetro "
-                    + "opcional 'asignaturaId' filtra por la temática que realmente atiende (HU_004).")
+                    + "opcional 'asignaturaId' filtra por la temática que realmente atiende.")
     public ResponseEntity<ApiResponse<List<MonitorDirectoryResponse>>> listMonitors(
             @RequestParam(value = "asignaturaId", required = false) Integer asignaturaId) {
         return ResponseEntity.ok(
