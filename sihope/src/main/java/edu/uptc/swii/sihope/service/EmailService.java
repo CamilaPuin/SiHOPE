@@ -141,8 +141,7 @@ public class EmailService {
 
     private void send(String recipient, String subject, String htmlBody) {
         if (!smtpConfigured()) {
-            log.warn("SMTP no configurado (spring.mail.host/username/password vacíos); no se envió el correo a {} (asunto: {})",
-                    recipient, subject);
+            simulate(recipient, subject, htmlBody);
             return;
         }
         try {
@@ -182,8 +181,21 @@ public class EmailService {
             Transport.send(mime);
             log.info("Correo enviado a {} vía SMTP (asunto: {})", recipient, subject);
         } catch (Exception e) {
-            log.error("Fallo al enviar correo a {} vía SMTP. Causa: {}", recipient, e.getMessage(), e);
+            // Si el envío real falla (p. ej. SMTP bloqueado en el hosting), se registra
+            // el correo en modo simulado para no interrumpir el flujo de la aplicación.
+            log.warn("No se pudo enviar el correo a {} vía SMTP ({}); se registra en modo simulado.",
+                    recipient, e.getMessage());
+            simulate(recipient, subject, htmlBody);
         }
+    }
+
+    private void simulate(String recipient, String subject, String htmlBody) {
+        log.info("\n[CORREO SIMULADO]\n" +
+                "Para: {}\n" +
+                "Asunto: {}\n" +
+                "Cuerpo: {}\n" +
+                "-------------------------------------------------",
+                recipient, subject, htmlBody);
     }
 
     private boolean smtpConfigured() {
