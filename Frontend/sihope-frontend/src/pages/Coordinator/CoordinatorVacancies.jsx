@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Swal from "sweetalert2";
 import Field from "../../components/common/Field";
 import Alert from "../../components/common/Alert";
@@ -11,10 +11,13 @@ import {
     changeApplicationStatus,
     promoteToMonitor
 } from "../../services/vacancyService";
+import { listAsignaturas } from "../../services/asignaturaService";
+
+const TODAY = new Date().toLocaleDateString("en-CA");
 
 const INITIAL_FORM = {
     titulo: "",
-    materia: "",
+    materiaIds: [],
     requisitos: "",
     plazas: "",
     fechaLimite: "",
@@ -24,7 +27,12 @@ const INITIAL_FORM = {
 const STATUS_BADGE = {
     PENDIENTE: "badge badge-yellow",
     APROBADA: "badge badge-active",
-    RECHAZADA: "badge badge-inactive"
+    RECHAZADA: "badge badge-inactive",
+    MONITOR_ASIGNADO: "badge badge-active"
+};
+
+const STATUS_LABEL = {
+    MONITOR_ASIGNADO: "MONITOR ASIGNADO"
 };
 
 const toast = (icon, title) =>
@@ -40,6 +48,7 @@ const toast = (icon, title) =>
 
 export default function CoordinatorVacancies() {
     const [vacancies, setVacancies] = useState([]);
+    const [catalog, setCatalog] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
 
@@ -52,9 +61,6 @@ export default function CoordinatorVacancies() {
     const [selectedVacancy, setSelectedVacancy] = useState(null);
     const [applications, setApplications] = useState([]);
     const [loadingApplications, setLoadingApplications] = useState(false);
-
-    // Reusable refresh invoked after create/close actions; the initial load lives
-    // in the effect below so it can be cancelled on unmount.
     const load = useCallback(async () => {
         try {
             const res = await listAll();
@@ -67,10 +73,11 @@ export default function CoordinatorVacancies() {
 
     useEffect(() => {
         let active = true;
-        listAll()
-            .then((res) => {
+        Promise.all([listAll(), listAsignaturas()])
+            .then(([vacanciesRes, catalogRes]) => {
                 if (active) {
-                    setVacancies(res.data ?? []);
+                    setVacancies(vacanciesRes.data ?? []);
+                    setCatalog(catalogRes.data ?? []);
                     setLoadError("");
                 }
             })
@@ -87,6 +94,22 @@ export default function CoordinatorVacancies() {
 
     const update = (field) => (e) =>
         setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+    const toggleMateria = (id) =>
+        setForm((prev) => ({
+            ...prev,
+            materiaIds: prev.materiaIds.includes(id)
+                ? prev.materiaIds.filter((m) => m !== id)
+                : [...prev.materiaIds, id]
+        }));
+
+    const materiaNames = useMemo(
+        () =>
+            catalog
+                .filter((a) => form.materiaIds.includes(a.id))
+                .map((a) => a.nombre),
+        [catalog, form.materiaIds]
+    );
 
     const openPreview = (e) => {
         e.preventDefault();
@@ -171,8 +194,9 @@ export default function CoordinatorVacancies() {
         const confirmation = await Swal.fire({
             title: "¿Asignar como monitor?",
             html: `<strong>${p.aspiranteNombre}</strong><br/>${p.aspiranteCorreo}<br/><br/>
-                   Se le otorgará el rol MONITOR. Su sesión actual se invalidará y deberá
-                   iniciar sesión de nuevo para aplicar los permisos.`,
+                   Se le otorgará el rol MONITOR y se le asignarán las materias de esta
+                   convocatoria. Su sesión actual se invalidará y deberá iniciar sesión
+                   de nuevo para aplicar los permisos.`,
             icon: "question",
             showCancelButton: true,
             confirmButtonText: "Asignar monitor",
@@ -183,6 +207,7 @@ export default function CoordinatorVacancies() {
         try {
             const res = await promoteToMonitor(p.id);
             await reloadApplications();
+            await load();
             Swal.fire({
                 icon: "success",
                 title: "Monitor asignado",
@@ -223,14 +248,6 @@ export default function CoordinatorVacancies() {
                             error={errors.titulo}
                         />
                         <Field
-                            label="Materia"
-                            id="materia"
-                            value={form.materia}
-                            onChange={update("materia")}
-                            placeholder="Estructuras de Datos"
-                            error={errors.materia}
-                        />
-                        <Field
                             label="Plazas"
                             id="plazas"
                             type="number"
@@ -244,11 +261,43 @@ export default function CoordinatorVacancies() {
                             label="Fecha límite"
                             id="fechaLimite"
                             type="date"
+                            min={TODAY}
                             value={form.fechaLimite}
                             onChange={update("fechaLimite")}
                             error={errors.fechaLimite}
                         />
                     </div>
+                    <Field
+                        label="Materias que orientará el monitor"
+                        id="materias"
+                        hint="del catálogo del administrador"
+                        error={errors.materiaIds}
+                    >
+                        {catalog.length === 0 ? (
+                            <p className="muted">
+                                El catálogo de asignaturas está vacío. Pide al administrador que
+                                las registre antes de crear la convocatoria.
+                            </p>
+                        ) : (
+                            <div className="chips">
+                                {catalog.map((a) => (
+                                    <label
+                                        key={a.id}
+                                        className="chip"
+                                        style={{ cursor: "pointer" }}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={form.materiaIds.includes(a.id)}
+                                            onChange={() => toggleMateria(a.id)}
+                                            style={{ marginRight: 6 }}
+                                        />
+                                        {a.nombre}
+                                    </label>
+                                ))}
+                            </div>
+                        )}
+                    </Field>
                     <Field label="Requisitos" id="requisitos" error={errors.requisitos}>
                         <textarea
                             id="requisitos"
@@ -355,7 +404,7 @@ export default function CoordinatorVacancies() {
                         </div>
                         <div className="schedule">
                             <div className="schedule__row"><span>Título</span><span><strong>{form.titulo || "—"}</strong></span></div>
-                            <div className="schedule__row"><span>Materia</span><span>{form.materia || "—"}</span></div>
+                            <div className="schedule__row"><span>Materias</span><span>{materiaNames.length > 0 ? materiaNames.join(", ") : "—"}</span></div>
                             <div className="schedule__row"><span>Plazas</span><span>{form.plazas || "—"}</span></div>
                             <div className="schedule__row"><span>Fecha límite</span><span>{form.fechaLimite || "—"}</span></div>
                         </div>
@@ -376,14 +425,25 @@ export default function CoordinatorVacancies() {
                 </div>
             )}
 
-            {selectedVacancy && (
+            {selectedVacancy && (() => {
+                const assignedCount = applications.filter(
+                    (a) => a.estado === "MONITOR_ASIGNADO"
+                ).length;
+                const slotsFull = assignedCount >= selectedVacancy.plazas;
+                return (
                 <div className="modal-overlay" onClick={() => setSelectedVacancy(null)}>
                     <div className="modal-box card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
                         <div className="card__title">Postulaciones · {selectedVacancy.titulo}</div>
                         <div className="card__subtitle">
                             Aprueba o rechaza aspirantes; los aprobados pueden asignarse como
-                            monitor.
+                            monitor. Plazas ocupadas: {assignedCount} de {selectedVacancy.plazas}.
                         </div>
+
+                        {slotsFull && (
+                            <Alert type="info">
+                                Todas las plazas de esta convocatoria ya están ocupadas.
+                            </Alert>
+                        )}
 
                         {loadingApplications ? (
                             <div className="text-center mt-16"><Spinner large /></div>
@@ -406,7 +466,7 @@ export default function CoordinatorVacancies() {
                                                 </span>
                                             </span>
                                             <span className={STATUS_BADGE[p.estado] ?? "badge"}>
-                                                {p.estado}
+                                                {STATUS_LABEL[p.estado] ?? p.estado}
                                             </span>
                                         </div>
 
@@ -420,6 +480,7 @@ export default function CoordinatorVacancies() {
                                             </div>
                                         )}
 
+                                        {p.estado !== "MONITOR_ASIGNADO" && (
                                         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                                             {p.estado !== "APROBADA" && (
                                                 <button
@@ -444,11 +505,18 @@ export default function CoordinatorVacancies() {
                                                     type="button"
                                                     className="btn btn-primary btn-sm"
                                                     onClick={() => promote(p)}
+                                                    disabled={slotsFull}
+                                                    title={
+                                                        slotsFull
+                                                            ? "No quedan plazas disponibles en esta convocatoria."
+                                                            : undefined
+                                                    }
                                                 >
                                                     Asignar como monitor
                                                 </button>
                                             )}
                                         </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -461,7 +529,8 @@ export default function CoordinatorVacancies() {
                         </div>
                     </div>
                 </div>
-            )}
+                );
+            })()}
         </>
     );
 }

@@ -23,6 +23,15 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     List<User> findByRole_NameOrderByFirstNameAscLastNameAsc(String roleName);
 
+    List<User> findDistinctByRole_NameAndSubjects_IdOrderByFirstNameAscLastNameAsc(
+            String roleName, Integer subjectId);
+
+    long countBySubjects_Id(Integer subjectId);
+
+    long countByRole_NameAndActiveTrueAndIdNot(String roleName, Integer id);
+
+    long countByCareer_Id(Integer careerId);
+
     default List<User> findByRole_NombreOrderByNombresAscApellidosAsc(String nombreRol) {
         return findByRole_NameOrderByFirstNameAscLastNameAsc(nombreRol);
     }

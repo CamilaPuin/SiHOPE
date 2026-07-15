@@ -13,6 +13,8 @@ import {
 let counter = 0;
 const newId = () => `bloque-${counter++}`;
 
+const MAX_TOTAL_MINUTES = 8 * 60;
+
 function mondayOfThisWeek() {
     const today = new Date();
     const day = today.getDay();
@@ -37,8 +39,6 @@ function blockDate(monday, diaSemana, hhmm) {
 }
 
 export default function MonitorAvailability() {
-    // The reference Monday is a stable value for the component's lifetime; it is
-    // read during render (initialDate) so it lives in state, not a ref.
     const [monday] = useState(mondayOfThisWeek);
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -91,6 +91,21 @@ export default function MonitorAvailability() {
             };
         });
 
+        const totalMinutes = bloques.reduce((acc, b) => {
+            const [hi, mi] = b.horaInicio.split(":").map(Number);
+            const [hf, mf] = b.horaFin.split(":").map(Number);
+            return acc + Math.max(0, hf * 60 + mf - (hi * 60 + mi));
+        }, 0);
+        if (totalMinutes > MAX_TOTAL_MINUTES) {
+            Swal.fire({
+                icon: "warning",
+                title: "Superas el máximo de 8 horas",
+                text: `Tu disponibilidad suma ${(totalMinutes / 60).toFixed(1)} h. `
+                    + "Elimina algunas franjas para no exceder las 8 horas en total."
+            });
+            return;
+        }
+
         setSaving(true);
         try {
             const res = await saveAvailability(bloques);
@@ -140,6 +155,7 @@ export default function MonitorAvailability() {
                             initialView="timeGridWeek"
                             initialDate={monday}
                             firstDay={1}
+                            hiddenDays={[0]}
                             locale="es"
                             allDaySlot={false}
                             slotMinTime="06:00:00"

@@ -5,9 +5,7 @@ import { getToken } from "../utils/token";
 
 export default function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
-    // Only start in the loading state when there is a token to validate;
-    // otherwise loading is already resolved and the effect below is a no-op.
-    const [loading, setLoading] = useState(() => Boolean(getToken()));
+  const [loading, setLoading] = useState(() => Boolean(getToken()));
 
     useEffect(() => {
         if (!getToken()) return undefined;

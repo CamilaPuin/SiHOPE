@@ -82,6 +82,30 @@ class AvailabilityServiceTest {
     }
 
     @Test
+    void rejectsMoreThanEightTotalHours() {
+        List<TimeBlock> blocks = List.of(
+                new TimeBlock(1, "08:00", "13:00"),
+                new TimeBlock(2, "08:00", "12:00"));
+
+        List<String> errors = service.replace(1, blocks);
+
+        assertFalse(errors.isEmpty());
+        verify(availabilityRepository, never()).saveAll(any());
+    }
+
+    @Test
+    void acceptsExactlyEightTotalHours() {
+        List<TimeBlock> blocks = List.of(
+                new TimeBlock(1, "08:00", "12:00"),
+                new TimeBlock(2, "08:00", "12:00"));
+
+        List<String> errors = service.replace(1, blocks);
+
+        assertTrue(errors.isEmpty());
+        verify(availabilityRepository).saveAll(any());
+    }
+
+    @Test
     void reportsErrorIfMonitorDoesNotExist() {
         when(userRepository.findById(anyInt())).thenReturn(Optional.empty());
         List<String> errors = service.replace(99, List.of(new TimeBlock(1, "10:00", "12:00")));
@@ -100,7 +124,7 @@ class AvailabilityServiceTest {
         when(availabilityRepository.findByMonitorIdOrderByDayOfWeekAscStartTimeAsc(1))
                 .thenReturn(List.of(new Availability(monitor, 1, LocalTime.of(10, 0), LocalTime.of(12, 0))));
 
-        List<MonitorDirectoryResponse> monitors = service.listMonitors();
+        List<MonitorDirectoryResponse> monitors = service.listMonitors(null);
 
         assertEquals(1, monitors.size());
         MonitorDirectoryResponse dto = monitors.get(0);

@@ -16,6 +16,8 @@ public interface ApplicationRepository extends JpaRepository<Application, Intege
 
     boolean existsByApplicantIdAndState(Integer applicantId, String state);
 
+    long countByVacancyIdAndState(Integer vacancyId, String state);
+
     default boolean existsByConvocatoriaIdAndAspiranteId(Integer convocatoriaId, Integer aspiranteId) {
         return existsByVacancyIdAndApplicantId(convocatoriaId, aspiranteId);
     }

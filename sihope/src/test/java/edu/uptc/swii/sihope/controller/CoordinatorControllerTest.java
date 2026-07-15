@@ -21,6 +21,8 @@ import edu.uptc.swii.sihope.config.UserArgumentResolver;
 import edu.uptc.swii.sihope.domain.Application;
 import edu.uptc.swii.sihope.domain.User;
 import edu.uptc.swii.sihope.dto.AuthenticatedUser;
+import edu.uptc.swii.sihope.service.AsignaturaService;
+import edu.uptc.swii.sihope.service.ReportService;
 import edu.uptc.swii.sihope.service.VacancyService;
 import edu.uptc.swii.sihope.service.ApplicationService;
 import edu.uptc.swii.sihope.service.UserService;
@@ -31,6 +33,8 @@ class CoordinatorControllerTest {
     private VacancyService vacancyService;
     private ApplicationService applicationService;
     private UserService userService;
+    private AsignaturaService asignaturaService;
+    private ReportService reportService;
     private MockMvc mvc;
 
     private static final AuthenticatedUser COORDINADOR =
@@ -41,8 +45,11 @@ class CoordinatorControllerTest {
         vacancyService = Mockito.mock(VacancyService.class);
         applicationService = Mockito.mock(ApplicationService.class);
         userService = Mockito.mock(UserService.class);
+        asignaturaService = Mockito.mock(AsignaturaService.class);
+        reportService = Mockito.mock(ReportService.class);
         mvc = MockMvcBuilders
-                .standaloneSetup(new CoordinatorController(vacancyService, applicationService, userService))
+                .standaloneSetup(new CoordinatorController(
+                        vacancyService, applicationService, userService, asignaturaService, reportService))
                 .setCustomArgumentResolvers(new UserArgumentResolver())
                 .build();
     }

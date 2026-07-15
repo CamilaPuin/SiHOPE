@@ -9,9 +9,10 @@ import {
     changeRole,
     changeStatus
 } from "../../services/userService";
+import { listCareers } from "../../services/carreraService";
 import { ROLES } from "../../utils/roles";
 
-const INITIAL_FORM = { nombre: "", correo: "", documento: "", rol: "" };
+const INITIAL_FORM = { nombre: "", correo: "", documento: "", rol: "", carreraId: "" };
 
 const ROLE_LABEL = {
     ESTUDIANTE: "Estudiante",
@@ -41,6 +42,7 @@ export default function AdminUsers() {
     const [createError, setCreateError] = useState("");
     const [createSuccess, setCreateSuccess] = useState("");
     const [creating, setCreating] = useState(false);
+    const [careers, setCareers] = useState([]);
 
     const loadUsers = useCallback(async () => {
         try {
@@ -71,6 +73,12 @@ export default function AdminUsers() {
         };
     }, []);
 
+    useEffect(() => {
+        listCareers()
+            .then((res) => setCareers(res.data ?? []))
+            .catch(() => setCareers([]));
+    }, []);
+
     const update = (field) => (e) =>
         setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
@@ -81,7 +89,11 @@ export default function AdminUsers() {
         setErrors({});
         setCreating(true);
         try {
-            const res = await create(form);
+            const payload = {
+                ...form,
+                carreraId: form.carreraId ? Number(form.carreraId) : null
+            };
+            const res = await create(payload);
             setCreateSuccess(
                 res.message ||
                     "Usuario creado. Se enviaron las credenciales al correo institucional."
@@ -185,8 +197,18 @@ export default function AdminUsers() {
                         <Field label="Rol" id="rol" error={errors.rol}>
                             <select
                                 id="rol"
+                                className="input"
                                 value={form.rol}
-                                onChange={update("rol")}
+                                onChange={(e) =>
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        rol: e.target.value,
+                                        carreraId:
+                                            e.target.value === "ESTUDIANTE"
+                                                ? prev.carreraId
+                                                : ""
+                                    }))
+                                }
                             >
                                 <option value="">Selecciona un rol…</option>
                                 {ROLES.map((r) => (
@@ -196,6 +218,23 @@ export default function AdminUsers() {
                                 ))}
                             </select>
                         </Field>
+                        {form.rol === "ESTUDIANTE" && (
+                            <Field label="Carrera" id="carrera" error={errors.carrera}>
+                                <select
+                                    id="carrera"
+                                    className="input"
+                                    value={form.carreraId}
+                                    onChange={update("carreraId")}
+                                >
+                                    <option value="">Selecciona una carrera…</option>
+                                    {careers.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.nombre}
+                                        </option>
+                                    ))}
+                                </select>
+                            </Field>
+                        )}
                     </div>
                     <button
                         type="submit"
@@ -245,11 +284,13 @@ export default function AdminUsers() {
                                                 style={{ fontSize: "0.82rem" }}
                                             >
                                                 {u.codigo}
+                                                {u.carrera ? ` · ${u.carrera}` : ""}
                                             </span>
                                         </td>
                                         <td>{u.correo}</td>
                                         <td>
                                             <select
+                                                className="input"
                                                 value={u.rol}
                                                 aria-label="Rol"
                                                 onChange={(e) =>

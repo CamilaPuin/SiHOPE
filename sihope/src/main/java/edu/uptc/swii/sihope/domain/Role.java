@@ -43,7 +43,6 @@ public class Role {
         this.name = name;
     }
 
-    // Spanish aliases for compatibility
     public String getNombre() {
         return getName();
     }

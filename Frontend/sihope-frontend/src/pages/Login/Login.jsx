@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import Isotype, { Wordmark } from "../../components/layout/Isotype";
+import Isotype from "../../components/layout/Isotype";
+import logo from "../../images/logo-sihope.jpeg";
 import Field from "../../components/common/Field";
 import Alert from "../../components/common/Alert";
 import Spinner from "../../components/common/Spinner";
@@ -10,20 +11,20 @@ import "./Login.css";
 
 const QUERY_MESSAGES = {
     logout: { type: "success", text: "Cerraste sesión correctamente." },
-    verificado: {
+    verified: {
         type: "success",
         text: "Tu cuenta fue verificada. Ya puedes iniciar sesión."
     },
-    reestablecida: {
+    passwordReset: {
         type: "success",
         text: "Tu contraseña fue restablecida. Inicia sesión con la nueva."
     },
-    registrado: {
+    registered: {
         type: "info",
         text:
             "¡Cuenta creada! Revisa tu correo institucional y verifícala antes de iniciar sesión."
     },
-    tokeninvalido: {
+    invalidToken: {
         type: "error",
         text: "El enlace de verificación no es válido o ya fue utilizado."
     }
@@ -71,8 +72,7 @@ export default function Login() {
             <main className="login-card">
                 <section className="login-brand">
                     <div className="login-brand__logo">
-                        <Isotype negative />
-                        <Wordmark negative />
+                        <Isotype src={logo} negative />
                     </div>
                     <div>
                         <p className="login-brand__headline">
@@ -84,7 +84,7 @@ export default function Login() {
                             monitores.
                         </p>
                     </div>
-                    <p className="login-brand__tagline">Connect · Educate · Empower</p>
+                    <p className="login-brand__tagline">Conectate · Edúcate · Superate</p>
                 </section>
 
                 <section className="login-form-wrap">

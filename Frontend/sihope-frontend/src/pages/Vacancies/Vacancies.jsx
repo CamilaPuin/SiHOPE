@@ -1,13 +1,56 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Swal from "sweetalert2";
 import Field from "../../components/common/Field";
 import Alert from "../../components/common/Alert";
 import Spinner from "../../components/common/Spinner";
-import { listOpen, apply } from "../../services/vacancyService";
+import { listOpen, apply, myApplications } from "../../services/vacancyService";
+
+const APPLICATION_STATUS = {
+    PENDIENTE: {
+        label: "Ya te postulaste",
+        badge: "badge badge-yellow",
+        border: "#e0a80d"
+    },
+    APROBADA: {
+        label: "Postulación aprobada",
+        badge: "badge badge-active",
+        border: "#1f8a4c"
+    },
+    RECHAZADA: {
+        label: "Postulación rechazada",
+        badge: "badge badge-inactive",
+        border: "#a12626"
+    },
+    MONITOR_ASIGNADO: {
+        label: "¡Fuiste asignado como monitor!",
+        badge: "badge badge-active",
+        border: "#1f8a4c"
+    }
+};
 
 const APPLICATION_FIELDS = [
-    { key: "promedio", label: "Promedio acumulado", type: "text", required: true, placeholder: "4.2" },
-    { key: "semestre", label: "Semestre actual", type: "text", required: true, placeholder: "6" },
+    {
+        key: "promedio",
+        label: "Promedio acumulado",
+        type: "number",
+        required: true,
+        placeholder: "4.2",
+        inputMode: "decimal",
+        step: "0.1",
+        min: "0",
+        max: "5"
+    },
+    {
+        key: "semestre",
+        label: "Semestre actual",
+        type: "number",
+        required: true,
+        placeholder: "6",
+        inputMode: "numeric",
+        step: "1",
+        min: "1",
+        max: "12"
+    },
     {
         key: "motivacion",
         label: "¿Por qué quieres ser monitor?",
@@ -17,11 +60,32 @@ const APPLICATION_FIELDS = [
     }
 ];
 
+const NUMERIC_FIELDS = new Set(["promedio", "semestre"]);
+const NUMERIC_VALIDATORS = {
+    promedio: (value) => /^\d+(\.\d?)?$/.test(value),
+    semestre: (value) => /^\d+$/.test(value)
+};
+const RANGE_VALIDATORS = {
+    promedio: (value) => {
+        const n = Number(value);
+        return n >= 0 && n <= 5;
+    },
+    semestre: (value) => {
+        const n = Number(value);
+        return n >= 1 && n <= 12;
+    }
+};
+const RANGE_MESSAGES = {
+    promedio: "El promedio debe estar entre 0 y 5.",
+    semestre: "El semestre debe estar entre 1 y 12."
+};
+
 const initialFormState = () =>
     Object.fromEntries(APPLICATION_FIELDS.map((c) => [c.key, ""]));
 
 export default function Vacancies() {
     const [vacancies, setVacancies] = useState([]);
+    const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
 
@@ -31,12 +95,14 @@ export default function Vacancies() {
     const [submitError, setSubmitError] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
-    // Reusable refresh invoked after a successful application; the initial load
-    // lives in the effect below so it can be cancelled on unmount.
     const load = useCallback(async () => {
         try {
-            const res = await listOpen();
-            setVacancies(res.data ?? []);
+            const [vacanciesRes, applicationsRes] = await Promise.all([
+                listOpen(),
+                myApplications().catch(() => ({ data: [] }))
+            ]);
+            setVacancies(vacanciesRes.data ?? []);
+            setApplications(applicationsRes.data ?? []);
             setLoadError("");
         } catch (err) {
             setLoadError(err.message);
@@ -45,10 +111,11 @@ export default function Vacancies() {
 
     useEffect(() => {
         let active = true;
-        listOpen()
-            .then((res) => {
+        Promise.all([listOpen(), myApplications().catch(() => ({ data: [] }))])
+            .then(([vacanciesRes, applicationsRes]) => {
                 if (active) {
-                    setVacancies(res.data ?? []);
+                    setVacancies(vacanciesRes.data ?? []);
+                    setApplications(applicationsRes.data ?? []);
                     setLoadError("");
                 }
             })
@@ -63,6 +130,13 @@ export default function Vacancies() {
         };
     }, []);
 
+    // Estado de mi postulación por convocatoria (para resaltar las tarjetas).
+    const applicationByVacancy = useMemo(() => {
+        const map = new Map();
+        applications.forEach((a) => map.set(a.convocatoriaId, a.estado));
+        return map;
+    }, [applications]);
+
     const openModal = (vacancy) => {
         setSelected(vacancy);
         setForm(initialFormState());
@@ -72,21 +146,48 @@ export default function Vacancies() {
 
     const closeModal = () => setSelected(null);
 
-    const update = (key) => (e) =>
-        setForm((prev) => ({ ...prev, [key]: e.target.value }));
+    const update = (key) => (e) => {
+        const value = e.target.value;
+
+        if (NUMERIC_FIELDS.has(key)) {
+            const validator = NUMERIC_VALIDATORS[key];
+            const isValid = value === "" || validator(value);
+            if (!isValid) {
+                return;
+            }
+            if (value !== "" && !RANGE_VALIDATORS[key](value)) {
+                return;
+            }
+        }
+
+        setForm((prev) => ({ ...prev, [key]: value }));
+    };
 
     const submit = async (e) => {
         e.preventDefault();
         setSubmitError("");
 
         const missing = {};
+        const invalid = {};
         APPLICATION_FIELDS.forEach((c) => {
-            if (c.required && !form[c.key]?.trim()) {
+            const value = form[c.key]?.trim() ?? "";
+
+            if (c.required && !value) {
                 missing[c.key] = "Este campo es obligatorio.";
             }
+
+            if (NUMERIC_FIELDS.has(c.key) && value) {
+                if (!NUMERIC_VALIDATORS[c.key](value)) {
+                    invalid[c.key] = "Este campo solo acepta números.";
+                } else if (!RANGE_VALIDATORS[c.key](value)) {
+                    invalid[c.key] = RANGE_MESSAGES[c.key];
+                }
+            }
         });
-        if (Object.keys(missing).length > 0) {
-            setErrors(missing);
+
+        const nextErrors = { ...missing, ...invalid };
+        if (Object.keys(nextErrors).length > 0) {
+            setErrors(nextErrors);
             return;
         }
 
@@ -136,8 +237,24 @@ export default function Vacancies() {
                 </div>
             ) : (
                 <section className="grid grid--2">
-                    {vacancies.map((c) => (
-                        <article key={c.id} className="card">
+                    {vacancies.map((c) => {
+                        const status = APPLICATION_STATUS[applicationByVacancy.get(c.id)];
+                        return (
+                        <article
+                            key={c.id}
+                            className="card"
+                            style={
+                                status
+                                    ? { border: `2px solid ${status.border}` }
+                                    : undefined
+                            }
+                        >
+                            {status && (
+                                <div style={{ marginBottom: 8 }}>
+                                    <span className={status.badge}>{status.label}</span>
+                                </div>
+                            )}
+
                             <div className="card__title">{c.titulo}</div>
                             <div className="card__subtitle">{c.materia}</div>
 
@@ -164,11 +281,18 @@ export default function Vacancies() {
                                 type="button"
                                 className="btn btn-primary btn-sm mt-16"
                                 onClick={() => openModal(c)}
+                                disabled={Boolean(status)}
+                                title={
+                                    status
+                                        ? "Ya te postulaste a esta convocatoria."
+                                        : undefined
+                                }
                             >
-                                Postularme
+                                {status ? "Ya postulado" : "Postularme"}
                             </button>
                         </article>
-                    ))}
+                        );
+                    })}
                 </section>
             )}
 
@@ -211,6 +335,7 @@ export default function Vacancies() {
                                         onChange={update(field.key)}
                                         placeholder={field.placeholder}
                                         error={errors[field.key]}
+                                        {...field}
                                     />
                                 )
                             )}

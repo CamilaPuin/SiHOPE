@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Isotype, { Wordmark } from "../../components/layout/Isotype";
+import Isotype from "../../components/layout/Isotype";
+import logo from "../../images/logo-sihope.jpeg";
 import Field from "../../components/common/Field";
 import Alert from "../../components/common/Alert";
 import Spinner from "../../components/common/Spinner";
 import PasswordRequirements from "../../components/common/PasswordRequirements";
-import { register } from "../../services/registrationService";
+import { register, listRegistrationCareers } from "../../services/registrationService";
 import { UPTC_EMAIL, isPasswordValid } from "../../utils/password";
 
 const INITIAL = {
@@ -13,9 +14,15 @@ const INITIAL = {
     apellidos: "",
     codigo: "",
     correo: "",
+    carreraId: "",
     password: "",
     password2: ""
 };
+
+// Solo letras (incluye tildes/ñ/ü) separadas por espacios simples, máx. 50
+const NAME_PATTERN = /^\p{L}+(?:\s\p{L}+)*$/u;
+// Alfanumérico sin espacios ni caracteres especiales, máx. 15
+const CODE_PATTERN = /^[A-Za-z0-9]{1,15}$/;
 
 export default function Registration() {
     const navigate = useNavigate();
@@ -23,17 +30,34 @@ export default function Registration() {
     const [errors, setErrors] = useState({});
     const [generalError, setGeneralError] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [careers, setCareers] = useState([]);
+
+    useEffect(() => {
+        listRegistrationCareers()
+            .then((res) => setCareers(res.data ?? []))
+            .catch(() => setCareers([]));
+    }, []);
 
     const update = (field) => (e) =>
         setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
     const validate = () => {
         const errs = {};
-        if (!form.nombres.trim()) errs.nombres = "Ingresa tus nombres.";
-        if (!form.apellidos.trim()) errs.apellidos = "Ingresa tus apellidos.";
-        if (!form.codigo.trim()) errs.codigo = "El código estudiantil es obligatorio.";
+        const nombres = form.nombres.trim();
+        const apellidos = form.apellidos.trim();
+        const codigo = form.codigo.trim();
+        if (!nombres) errs.nombres = "Ingresa tus nombres.";
+        else if (nombres.length > 50 || !NAME_PATTERN.test(nombres))
+            errs.nombres = "Los nombres solo pueden contener letras y espacios (máx. 50 caracteres).";
+        if (!apellidos) errs.apellidos = "Ingresa tus apellidos.";
+        else if (apellidos.length > 50 || !NAME_PATTERN.test(apellidos))
+            errs.apellidos = "Los apellidos solo pueden contener letras y espacios (máx. 50 caracteres).";
+        if (!codigo) errs.codigo = "El código estudiantil es obligatorio.";
+        else if (!CODE_PATTERN.test(codigo))
+            errs.codigo = "El código debe ser alfanumérico, sin espacios ni caracteres especiales (máx. 15 caracteres).";
         if (!UPTC_EMAIL.test(form.correo.trim()))
             errs.correo = "Debes usar un correo institucional de la UPTC (@uptc.edu.co).";
+        if (!form.carreraId) errs.carrera = "Selecciona tu carrera.";
         if (!isPasswordValid(form.password))
             errs.password = "La contraseña no cumple los requisitos de seguridad.";
         if (form.password !== form.password2 || !form.password2)
@@ -52,8 +76,8 @@ export default function Registration() {
         setErrors({});
         setSubmitting(true);
         try {
-            await register(form);
-            navigate("/login?registrado");
+            await register({ ...form, carreraId: Number(form.carreraId) });
+            navigate("/login?registered");
         } catch (err) {
             if (err.data && typeof err.data === "object") {
                 setErrors(err.data);
@@ -69,8 +93,7 @@ export default function Registration() {
         <div className="auth-wrap">
             <div className="auth-card">
                 <div className="auth-card__head">
-                    <Isotype negative />
-                    <Wordmark negative />
+                    <Isotype src={logo} negative />
                 </div>
 
                 <div className="auth-card__body">
@@ -94,7 +117,7 @@ export default function Registration() {
                                 id="nombres"
                                 value={form.nombres}
                                 onChange={update("nombres")}
-                                placeholder="Juan Manuel"
+                                placeholder="Pedrito José"
                                 error={errors.nombres}
                             />
                             <Field
@@ -102,7 +125,7 @@ export default function Registration() {
                                 id="apellidos"
                                 value={form.apellidos}
                                 onChange={update("apellidos")}
-                                placeholder="Ojeda Sánchez"
+                                placeholder="Ojeda Puin"
                                 error={errors.apellidos}
                             />
                             <Field
@@ -125,6 +148,26 @@ export default function Registration() {
                                 placeholder="nombre.apellido@uptc.edu.co"
                                 error={errors.correo}
                             />
+                            <Field
+                                className="col-2"
+                                label="Carrera"
+                                id="carrera"
+                                error={errors.carrera}
+                            >
+                                <select
+                                    id="carrera"
+                                    className="input"
+                                    value={form.carreraId}
+                                    onChange={update("carreraId")}
+                                >
+                                    <option value="">Selecciona tu carrera…</option>
+                                    {careers.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.nombre}
+                                        </option>
+                                    ))}
+                                </select>
+                            </Field>
                             <Field
                                 label="Contraseña"
                                 id="password"

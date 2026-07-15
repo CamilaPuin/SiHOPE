@@ -30,7 +30,7 @@ Necesitas solo la base de datos en Docker:
 
 ```bash
 docker-compose up -d mysql
-./mvnw spring-boot:run          # usa DB_URL por defecto jdbc:mysql://localhost:13306/library
+./mvnw spring-boot:run         
 ```
 
 ## Variables de entorno
@@ -40,9 +40,9 @@ Definidas con valores por defecto en `application.properties` y `docker-compose.
 
 | Variable                    | Por defecto                                   | Descripción                                   |
 | --------------------------- | --------------------------------------------- | --------------------------------------------- |
-| `DB_URL`                    | `jdbc:mysql://localhost:13306/library`        | URL JDBC de MySQL (en compose: `mysql:3306`)  |
+| `DB_URL`                    | `jdbc:mysql://localhost:13306/sihope`        | URL JDBC de MySQL (en compose: `mysql:3306`)  |
 | `DB_USERNAME`               | `user`                                        | Usuario de la base de datos                   |
-| `DB_PASSWORD`               | `library2026`                                 | Contraseña de la base de datos                |
+| `DB_PASSWORD`               | `sihope2026`                                 | Contraseña de la base de datos                |
 | `APP_CORS_ALLOWED_ORIGINS`  | `http://localhost:5173`                       | Orígenes permitidos por CORS (coma-separados) |
 
 > **Producción / Vercel:** añade el dominio del frontend a

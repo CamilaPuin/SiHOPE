@@ -19,7 +19,7 @@ public class WebConfig implements WebMvcConfigurer {
     private final UserArgumentResolver userArgumentResolver;
 
     public WebConfig(JwtAuthInterceptor jwtAuthInterceptor,
-                     UserArgumentResolver userArgumentResolver) {
+            UserArgumentResolver userArgumentResolver) {
         this.jwtAuthInterceptor = jwtAuthInterceptor;
         this.userArgumentResolver = userArgumentResolver;
     }
@@ -33,6 +33,12 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/monitor/**",
                         "/api/monitores",
                         "/api/monitores/**",
+                        "/api/asignaturas",
+                        "/api/asignaturas/**",
+                        "/api/carreras",
+                        "/api/carreras/**",
+                        "/api/citas",
+                        "/api/citas/**",
                         "/api/coordinador/**",
                         "/api/convocatorias/**",
                         "/api/credenciales/password");
@@ -45,10 +51,12 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**")
+        registry.addMapping("/**")
                 .allowedOrigins(allowedOrigins)
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(true);
+                .exposedHeaders("Authorization", "Content-Type") 
+                .allowCredentials(true)
+                .maxAge(3600);
     }
 }

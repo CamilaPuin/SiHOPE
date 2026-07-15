@@ -10,6 +10,7 @@ public record MonitorDirectoryResponse(
         @JsonProperty("nombre") String name,
         @JsonProperty("iniciales") String initials,
         @JsonProperty("correo") String email,
+        @JsonProperty("asignaturas") List<String> subjects,
         @JsonProperty("disponibilidad") List<TimeBlock> availability) {
 
     public String nombre() {
@@ -22,6 +23,10 @@ public record MonitorDirectoryResponse(
 
     public String correo() {
         return email;
+    }
+
+    public List<String> asignaturas() {
+        return subjects;
     }
 
     public List<TimeBlock> disponibilidad() {

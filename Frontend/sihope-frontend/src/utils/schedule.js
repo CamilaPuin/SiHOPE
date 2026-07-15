@@ -1,4 +1,4 @@
-const DAYS = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+const DAYS = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
 export const dayName = (n) => DAYS[n] ?? "—";
 

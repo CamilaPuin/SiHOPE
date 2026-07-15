@@ -1,5 +1,6 @@
 package edu.uptc.swii.sihope.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -11,9 +12,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import edu.uptc.swii.sihope.domain.Carrera;
 import edu.uptc.swii.sihope.dto.UserDTO;
 import edu.uptc.swii.sihope.dto.request.RegisterRequest;
 import edu.uptc.swii.sihope.dto.response.ApiResponse;
+import edu.uptc.swii.sihope.service.CarreraService;
 import edu.uptc.swii.sihope.service.UserService;
 
 @RestController
@@ -21,9 +24,16 @@ import edu.uptc.swii.sihope.service.UserService;
 public class RegistrationController {
 
     private final UserService userService;
+    private final CarreraService carreraService;
 
-    public RegistrationController(UserService userService) {
+    public RegistrationController(UserService userService, CarreraService carreraService) {
         this.userService = userService;
+        this.carreraService = carreraService;
+    }
+
+    @GetMapping("/carreras")
+    public ResponseEntity<ApiResponse<List<Carrera>>> careers() {
+        return ResponseEntity.ok(ApiResponse.ok("Carreras obtenidas.", carreraService.listCatalog()));
     }
 
     @PostMapping
@@ -36,7 +46,7 @@ public class RegistrationController {
         form.setPassword(request.getPassword());
         form.setPassword2(request.getPassword2());
 
-        Map<String, String> errors = userService.registerStudent(form);
+        Map<String, String> errors = userService.registerStudent(form, request.getCareerId());
 
         if (!errors.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

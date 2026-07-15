@@ -9,6 +9,9 @@ export const detail = (id) =>
 export const apply = (id, datos) =>
     api.post(`/api/convocatorias/${id}/postulaciones`, { datos }).then((r) => r.data);
 
+export const myApplications = () =>
+    api.get("/api/convocatorias/mis-postulaciones").then((r) => r.data);
+
 export const createVacancy = (data) =>
     api.post("/api/coordinador/convocatorias", data).then((r) => r.data);
 

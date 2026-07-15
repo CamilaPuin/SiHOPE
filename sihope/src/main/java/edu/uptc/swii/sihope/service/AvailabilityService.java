@@ -1,5 +1,6 @@
 package edu.uptc.swii.sihope.service;
 
+import java.time.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import edu.uptc.swii.sihope.domain.Asignatura;
 import edu.uptc.swii.sihope.domain.Availability;
 import edu.uptc.swii.sihope.domain.User;
 import edu.uptc.swii.sihope.dto.TimeBlock;
@@ -30,14 +32,22 @@ public class AvailabilityService {
 
     private static final String MONITOR_ROLE = "MONITOR";
 
-    public List<MonitorDirectoryResponse> listMonitors() {
-        return userRepository.findByRole_NameOrderByFirstNameAscLastNameAsc(MONITOR_ROLE)
-                .stream()
+    private static final long MAX_TOTAL_MINUTES = 8 * 60;
+
+
+    @Transactional(readOnly = true)
+    public List<MonitorDirectoryResponse> listMonitors(Integer asignaturaId) {
+        List<User> monitors = (asignaturaId == null)
+                ? userRepository.findByRole_NameOrderByFirstNameAscLastNameAsc(MONITOR_ROLE)
+                : userRepository.findDistinctByRole_NameAndSubjects_IdOrderByFirstNameAscLastNameAsc(
+                        MONITOR_ROLE, asignaturaId);
+        return monitors.stream()
                 .map(m -> new MonitorDirectoryResponse(
                         m.getId(),
                         fullName(m),
                         initials(m),
                         m.getEmail(),
+                        m.getSubjects().stream().map(Asignatura::getName).sorted().toList(),
                         getBlocks(m.getId())))
                 .toList();
     }
@@ -85,7 +95,7 @@ public class AvailabilityService {
             String label = "Bloque " + (i + 1) + ": ";
 
             if (b.diaSemana() < 1 || b.diaSemana() > 7) {
-                errors.add(label + "el día de la semana debe estar entre 1 (Lunes) y 7 (Domingo).");
+                errors.add(label + "el día de la semana debe estar entre Lunes y Sabado.");
                 continue;
             }
             LocalTime start = parseTime(b.horaInicio());
@@ -102,6 +112,16 @@ public class AvailabilityService {
         }
 
         errors.addAll(detectOverlaps(toSave));
+
+        long totalMinutes = toSave.stream()
+                .mapToLong(b -> Duration.between(b.getStartTime(), b.getEndTime()).toMinutes())
+                .sum();
+        if (totalMinutes > MAX_TOTAL_MINUTES) {
+            long hours = totalMinutes / 60;
+            long minutes = totalMinutes % 60;
+            errors.add("La disponibilidad total no puede superar las 8 horas (actualmente suma "
+                    + hours + " h" + (minutes > 0 ? " " + minutes + " min" : "") + ").");
+        }
 
         if (!errors.isEmpty()) {
             return errors;

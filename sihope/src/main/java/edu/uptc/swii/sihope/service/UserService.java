@@ -1,5 +1,6 @@
 package edu.uptc.swii.sihope.service;
 
+import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,11 +16,13 @@ import org.springframework.stereotype.Service;
 
 import edu.uptc.swii.sihope.domain.History;
 import edu.uptc.swii.sihope.domain.Application;
+import edu.uptc.swii.sihope.domain.Carrera;
 import edu.uptc.swii.sihope.domain.Role;
 import edu.uptc.swii.sihope.domain.User;
 import edu.uptc.swii.sihope.dto.UserDTO;
 import edu.uptc.swii.sihope.repository.HistoryRepository;
 import edu.uptc.swii.sihope.repository.ApplicationRepository;
+import edu.uptc.swii.sihope.repository.CarreraRepository;
 import edu.uptc.swii.sihope.repository.RoleRepository;
 import edu.uptc.swii.sihope.repository.UserRepository;
 
@@ -29,21 +33,29 @@ public class UserService {
     private static final List<String> VALID_ROLES =
             List.of("ADMINISTRADOR", "COORDINADOR", "MONITOR", "ESTUDIANTE");
     private static final int RESET_VALIDITY_MIN = 30;
+    private static final int NAME_MAX = 50;
+    // Solo letras (incluye tildes/ñ/ü) separadas por espacios simples
+    private static final Pattern NAME_PATTERN = Pattern.compile("^\\p{L}+(?:\\s\\p{L}+)*$");
+    // Alfanumérico sin espacios ni caracteres especiales, máx. 15
+    private static final Pattern CODE_PATTERN = Pattern.compile("^[A-Za-z0-9]{1,15}$");
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final HistoryRepository historyRepository;
     private final ApplicationRepository applicationRepository;
+    private final CarreraRepository carreraRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public UserService(UserRepository userRepository, RoleRepository roleRepository,
                        HistoryRepository historyRepository,
-                       ApplicationRepository applicationRepository, EmailService emailService) {
+                       ApplicationRepository applicationRepository,
+                       CarreraRepository carreraRepository, EmailService emailService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.historyRepository = historyRepository;
         this.applicationRepository = applicationRepository;
+        this.carreraRepository = carreraRepository;
         this.emailService = emailService;
     }
 
@@ -92,14 +104,68 @@ public class UserService {
                 && correo.trim().length() > UPTC_DOMAIN.length();
     }
 
-    public Map<String, String> registerStudent(UserDTO dto) {
+    private boolean isValidName(String s) {
+        String t = s == null ? "" : s.trim();
+        return !t.isEmpty() && t.length() <= NAME_MAX && NAME_PATTERN.matcher(t).matches();
+    }
+
+    private boolean isValidCode(String s) {
+        return s != null && CODE_PATTERN.matcher(s.trim()).matches();
+    }
+
+    // Normaliza un nombre completo para comparar: sin tildes/diacríticos, minúsculas,
+    // espacios colapsados. Así "Juan Manuel Ojeda Sanchez" y "Juán  Manuel Ojeda Sánchez"
+    // se consideran el mismo nombre, sin importar cómo se dividan en nombres/apellidos.
+    private String normalizeName(String s) {
+        if (s == null) {
+            return "";
+        }
+        String noAccents = Normalizer.normalize(s, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+        return noAccents.trim().toLowerCase().replaceAll("\\s+", " ");
+    }
+
+    private boolean fullNameExists(String firstName, String lastName) {
+        String target = normalizeName((firstName == null ? "" : firstName) + " "
+                + (lastName == null ? "" : lastName));
+        if (target.isBlank()) {
+            return false;
+        }
+        return userRepository.findAll().stream()
+                .anyMatch(u -> normalizeName(
+                        (u.getFirstName() == null ? "" : u.getFirstName()) + " "
+                                + (u.getLastName() == null ? "" : u.getLastName()))
+                        .equals(target));
+    }
+
+    public Map<String, String> registerStudent(UserDTO dto, Integer careerId) {
         Map<String, String> errors = new LinkedHashMap<>();
 
-        if (isBlank(dto.getFirstName()))   errors.put("nombres", "Ingresa tus nombres.");
-        if (isBlank(dto.getLastName())) errors.put("apellidos", "Ingresa tus apellidos.");
+        boolean firstNameOk = false;
+        boolean lastNameOk = false;
+        if (isBlank(dto.getFirstName())) {
+            errors.put("nombres", "Ingresa tus nombres.");
+        } else if (!isValidName(dto.getFirstName())) {
+            errors.put("nombres", "Los nombres solo pueden contener letras y espacios (máx. 50 caracteres).");
+        } else {
+            firstNameOk = true;
+        }
+        if (isBlank(dto.getLastName())) {
+            errors.put("apellidos", "Ingresa tus apellidos.");
+        } else if (!isValidName(dto.getLastName())) {
+            errors.put("apellidos", "Los apellidos solo pueden contener letras y espacios (máx. 50 caracteres).");
+        } else {
+            lastNameOk = true;
+        }
+        if (firstNameOk && lastNameOk
+                && fullNameExists(dto.getFirstName(), dto.getLastName())) {
+            errors.put("apellidos", "Ya existe un usuario con ese nombre y apellidos.");
+        }
 
         if (isBlank(dto.getStudentCode())) {
             errors.put("codigo", "El código estudiantil es obligatorio.");
+        } else if (!isValidCode(dto.getStudentCode())) {
+            errors.put("codigo", "El código debe ser alfanumérico, sin espacios ni caracteres especiales (máx. 15 caracteres).");
         } else if (userRepository.existsByStudentCode(dto.getStudentCode().trim())) {
             errors.put("codigo", "El código estudiantil ya está registrado.");
         }
@@ -108,6 +174,16 @@ public class UserService {
             errors.put("correo", "Debes usar un correo institucional de la UPTC (" + UPTC_DOMAIN + ").");
         } else if (userRepository.existsByEmail(dto.getEmail().trim())) {
             errors.put("correo", "Este correo ya tiene una cuenta registrada.");
+        }
+
+        Carrera career = null;
+        if (careerId == null) {
+            errors.put("carrera", "Selecciona tu carrera.");
+        } else {
+            career = carreraRepository.findById(careerId).orElse(null);
+            if (career == null) {
+                errors.put("carrera", "La carrera seleccionada no existe.");
+            }
         }
 
         if (!isPasswordValid(dto.getPassword())) {
@@ -134,6 +210,7 @@ public class UserService {
         u.setVerified(false);
         u.setVerificationToken(token);
         u.setRole(studentRole);
+        u.setCareer(career);
         userRepository.save(u);
 
         emailService.sendVerification(u.getEmail(), token);
@@ -157,11 +234,23 @@ public class UserService {
     }
 
     public Map<String, String> createUser(String fullName, String email,
-                                           String studentCode, String roleName) {
+                                           String studentCode, String roleName, Integer careerId) {
         Map<String, String> errors = new LinkedHashMap<>();
 
-        if (isBlank(fullName)) errors.put("nombre", "El nombre es obligatorio.");
-        if (isBlank(studentCode))   errors.put("documento", "El documento/código es obligatorio.");
+        if (isBlank(fullName)) {
+            errors.put("nombre", "El nombre es obligatorio.");
+        } else if (!isValidName(fullName)) {
+            errors.put("nombre", "El nombre solo puede contener letras y espacios (máx. 50 caracteres).");
+        } else if (fullNameExists(fullName, "")) {
+            errors.put("nombre", "Ya existe un usuario con ese nombre y apellidos.");
+        }
+        if (isBlank(studentCode)) {
+            errors.put("documento", "El documento/código es obligatorio.");
+        } else if (!isValidCode(studentCode)) {
+            errors.put("documento", "El documento/código debe ser alfanumérico, sin espacios ni caracteres especiales (máx. 15 caracteres).");
+        } else if (userRepository.existsByStudentCode(studentCode.trim())) {
+            errors.put("documento", "Ya existe un usuario con ese documento/código.");
+        }
 
         if (!isInstitutionalEmail(email)) {
             errors.put("correo", "Ingresa un correo institucional válido (" + UPTC_DOMAIN + ").");
@@ -172,8 +261,17 @@ public class UserService {
         if (isBlank(roleName) || !VALID_ROLES.contains(roleName)) {
             errors.put("rol", "Selecciona un rol válido.");
         }
-        if (!isBlank(studentCode) && userRepository.existsByStudentCode(studentCode.trim())) {
-            errors.put("documento", "Ya existe un usuario con ese documento/código.");
+
+        Carrera career = null;
+        if ("ESTUDIANTE".equals(roleName)) {
+            if (careerId == null) {
+                errors.put("carrera", "Selecciona la carrera del estudiante.");
+            } else {
+                career = carreraRepository.findById(careerId).orElse(null);
+                if (career == null) {
+                    errors.put("carrera", "La carrera seleccionada no existe.");
+                }
+            }
         }
 
         if (!errors.isEmpty()) {
@@ -192,37 +290,57 @@ public class UserService {
         u.setActive(true);
         u.setVerified(true);
         u.setRole(getOrCreateRole(roleName));
+        u.setCareer(career);
         userRepository.save(u);
 
         emailService.sendCredentials(u.getEmail(), temporaryPassword);
         return errors;
     }
 
-    public boolean changeRole(Integer userId, String roleName) {
+    public enum RoleChangeResult { OK, NOT_FOUND, INVALID_ROLE, LAST_ADMIN }
+
+    public RoleChangeResult changeRole(Integer userId, String roleName, Integer actingUserId) {
         Optional<User> opt = userRepository.findById(userId);
-        if (opt.isEmpty() || isBlank(roleName) || !VALID_ROLES.contains(roleName)) {
-            return false;
+        if (opt.isEmpty()) {
+            return RoleChangeResult.NOT_FOUND;
+        }
+        if (isBlank(roleName) || !VALID_ROLES.contains(roleName)) {
+            return RoleChangeResult.INVALID_ROLE;
         }
         User u = opt.get();
+        boolean targetIsAdmin = u.getRole() != null && "ADMINISTRADOR".equals(u.getRole().getName());
+        if (targetIsAdmin && !"ADMINISTRADOR".equals(roleName)
+                && userId.equals(actingUserId)
+                && userRepository.countByRole_NameAndActiveTrueAndIdNot("ADMINISTRADOR", userId) == 0) {
+            return RoleChangeResult.LAST_ADMIN;
+        }
         String previousRole = u.getRole() != null ? u.getRole().getName() : "—";
         u.setRole(getOrCreateRole(roleName));
         u.setTokenVersion(u.getTokenVersion() + 1);
         userRepository.save(u);
         logHistory(u, History.CAMBIO_ROL, "Rol cambiado de " + previousRole + " a " + roleName);
-        return true;
+        return RoleChangeResult.OK;
     }
 
-    public Boolean changeStatus(Integer userId) {
+    public enum StatusChangeResult { ACTIVATED, DEACTIVATED, NOT_FOUND, LAST_ADMIN }
+
+    public StatusChangeResult changeStatus(Integer userId) {
         Optional<User> opt = userRepository.findById(userId);
         if (opt.isEmpty()) {
-            return null;
+            return StatusChangeResult.NOT_FOUND;
         }
         User u = opt.get();
+        boolean isActiveAdmin = u.isActive() && u.getRole() != null
+                && "ADMINISTRADOR".equals(u.getRole().getName());
+        if (isActiveAdmin
+                && userRepository.countByRole_NameAndActiveTrueAndIdNot("ADMINISTRADOR", userId) == 0) {
+            return StatusChangeResult.LAST_ADMIN;
+        }
         u.setActive(!u.isActive());
         u.setTokenVersion(u.getTokenVersion() + 1);
         userRepository.save(u);
         logHistory(u, History.ESTADO_CUENTA, u.isActive() ? "Cuenta activada" : "Cuenta desactivada");
-        return u.isActive();
+        return u.isActive() ? StatusChangeResult.ACTIVATED : StatusChangeResult.DEACTIVATED;
     }
 
     public enum PromotionResult { OK, NOT_FOUND, NOT_APPROVED, ALREADY_MONITOR }

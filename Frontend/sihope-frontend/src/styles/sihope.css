@@ -57,7 +57,8 @@ a { color: inherit; }
 .wordmark--neg .si { color: var(--blanco); }
 
 .brand-lockup { display: flex; align-items: center; gap: 12px; }
-.brand-lockup .iso { width: 40px; height: auto; }
+.brand-lockup { display: flex; align-items: center; gap: 12px; }
+.brand-lockup .iso { width: 120px; height: auto; display: block; object-fit: contain; max-width: 100%; border-radius: 8px; }
 .brand-lockup .wordmark { font-size: 1.5rem; }
 
 .app-shell {
@@ -107,14 +108,14 @@ a { color: inherit; }
     grid-area: sidebar;
     background: var(--negro);
     color: var(--blanco);
-    padding: 24px 18px;
+    padding: 20px 18px 24px;
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 20px;
 }
-.sidebar .brand-lockup { padding: 4px 8px 8px; }
-.sidebar .iso { width: 44px; }
-.sidebar .wordmark { font-size: 1.4rem; }
+.sidebar .brand-lockup { padding: 0 8px 8px; }
+.sidebar .iso { width: 100%; height: auto; display: block; object-fit: contain; max-width: 100%; margin: 0 auto; border-radius: 8px; }
+.sidebar .wordmark { font-size: 1.2rem; }
 
 .nav { display: flex; flex-direction: column; gap: 4px; }
 .nav__link {
@@ -274,8 +275,28 @@ input[type="date"], input[type="time"], select, textarea {
     font-size: 1rem;
     background: var(--beige);
     color: var(--negro);
+    box-sizing: border-box;
     transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
+
+textarea {
+    resize: none;
+    overflow-y: auto;
+}
+.swal2-container .swal2-textarea {
+    width: auto;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin-left: 1.5em;
+    margin-right: 1.5em;
+    padding: 10px 12px;
+    resize: none;
+    min-height: 96px;
+    max-height: 140px;
+    overflow-y: auto;
+    line-height: 1.4;
+}
+
 .input:focus, input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--amarillo);
@@ -373,13 +394,71 @@ input[type="date"], input[type="time"], select, textarea {
 .monitor-card__name { font-family: 'Manrope', sans-serif; font-weight: 700; }
 .monitor-card__prog { color: var(--gris-texto); font-size: 0.88rem; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--amarillo); color: var(--negro);
+    border-radius: 999px; padding: 4px 10px;
+    font-size: 0.82rem; font-weight: 700;
+}
+.chip--muted { background: var(--gris-borde); color: var(--negro); }
+.chip__x {
+    border: none; background: none; cursor: pointer;
+    font-size: 1.05rem; line-height: 1; color: inherit; padding: 0;
+}
 .schedule { display: grid; gap: 6px; }
 .schedule__row { display: flex; justify-content: space-between; font-size: 0.9rem; padding: 6px 0; border-bottom: 1px dashed var(--gris-borde); }
+
+.report-brand {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: relative;
+    background: var(--blanco);
+    border: 1px solid var(--gris-borde);
+    border-left: 6px solid var(--amarillo);
+    border-radius: var(--radio);
+    padding: 18px 22px;
+    box-shadow: var(--sombra);
+    overflow: hidden;
+}
+.report-brand__logo {
+    width: 68px;
+    height: 68px;
+    object-fit: contain;
+    border-radius: var(--radio-sm);
+    background: var(--blanco);
+    flex-shrink: 0;
+}
+.report-brand__meta { flex: 1; min-width: 0; }
+.report-brand__title {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800;
+    font-size: 1.25rem;
+    margin-bottom: 4px;
+}
+.report-brand__line { color: var(--gris-texto); font-size: 0.92rem; line-height: 1.5; }
+.report-brand__line strong { color: var(--negro); font-weight: 600; }
+.report-brand__badge {
+    align-self: flex-start;
+    background: var(--negro);
+    color: var(--amarillo);
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    padding: 4px 12px;
+    border-radius: 999px;
+}
+
+.report-detail { display: grid; gap: 2px; }
+.report-detail__row { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr; gap: 12px; font-size: 0.9rem; padding: 8px 0; border-bottom: 1px dashed var(--gris-borde); }
+.report-detail__row--head { font-weight: 600; color: var(--gris-suave); border-bottom: 1px solid var(--gris-borde); }
 
 .divider { height: 1px; background: var(--gris-borde); margin: 18px 0; border: none; }
 
 .muted { color: var(--gris-suave); }
 .mt-8 { margin-top: 8px; } .mt-16 { margin-top: 16px; } .mt-24 { margin-top: 24px; }
+.ml-8 { margin-left: 8px; }
 .text-center { text-align: center; }
 
 .auth-wrap {
@@ -403,7 +482,7 @@ input[type="date"], input[type="time"], select, textarea {
     padding: 30px 36px;
     display: flex; align-items: center; gap: 14px;
 }
-.auth-card__head .iso { width: 48px; }
+.auth-card__head .iso { width: 96px; }
 .auth-card__head .wordmark { font-size: 1.5rem; }
 .auth-card__body { padding: 32px 36px; }
 .auth-card__body h1 { font-size: 1.6rem; }

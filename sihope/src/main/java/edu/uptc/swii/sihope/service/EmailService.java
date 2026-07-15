@@ -3,7 +3,10 @@ package edu.uptc.swii.sihope.service;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Message;
 
+import jakarta.mail.Authenticator;
+import jakarta.mail.PasswordAuthentication;
 import jakarta.mail.Session;
+import jakarta.mail.Transport;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 
@@ -26,13 +29,37 @@ public class EmailService {
     private final ObjectProvider<Gmail> gmailProvider;
     private final String baseUrl;
     private final String sender;
+    private final String mailHost;
+    private final String mailUsername;
+    private final String mailPassword;
+    private final int mailPort;
+    private final String smtpAuth;
+    private final String starttlsEnabled;
+    private final String starttlsRequired;
+    private final String smtpSslTrust;
 
     public EmailService(ObjectProvider<Gmail> gmailProvider,
                         @Value("${app.frontend.base-url}") String baseUrl,
-                        @Value("${app.mail.from:}") String sender) {
+                        @Value("${app.mail.from:}") String sender,
+                        @Value("${spring.mail.host:}") String mailHost,
+                        @Value("${spring.mail.username:}") String mailUsername,
+                        @Value("${spring.mail.password:}") String mailPassword,
+                        @Value("${spring.mail.port:587}") int mailPort,
+                        @Value("${spring.mail.properties.mail.smtp.auth:true}") String smtpAuth,
+                        @Value("${spring.mail.properties.mail.smtp.starttls.enable:true}") String starttlsEnabled,
+                        @Value("${spring.mail.properties.mail.smtp.starttls.required:true}") String starttlsRequired,
+                        @Value("${spring.mail.properties.mail.smtp.ssl.trust:}") String smtpSslTrust) {
         this.gmailProvider = gmailProvider;
         this.baseUrl = baseUrl;
         this.sender = sender;
+        this.mailHost = mailHost;
+        this.mailUsername = mailUsername;
+        this.mailPassword = mailPassword;
+        this.mailPort = mailPort;
+        this.smtpAuth = smtpAuth;
+        this.starttlsEnabled = starttlsEnabled;
+        this.starttlsRequired = starttlsRequired;
+        this.smtpSslTrust = smtpSslTrust;
     }
 
     public void sendVerification(String correo, String token) {
@@ -75,31 +102,128 @@ public class EmailService {
                 "Solicitaste restablecer tu contraseña. El enlace vence en 30 minutos:\n  " + link);
     }
 
-    private void send(String recipient, String subject, String htmlBody,
-                      String simulatedType, String simulatedBody) {
-        Gmail gmail = gmailProvider.getIfAvailable();
-        if (gmail == null) {
-            simulate(simulatedType, recipient, subject, simulatedBody);
-            return;
-        }
-        try {
-            MimeMessage mime = buildMime(recipient, subject, htmlBody);
-            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-            mime.writeTo(buffer);
-            String raw = Base64.getUrlEncoder().encodeToString(buffer.toByteArray());
-
-            Message message = new Message().setRaw(raw);
-            gmail.users().messages().send("me", message).execute();
-            log.info("Correo enviado a {} vía API de Gmail (asunto: {})", recipient, subject);
-        } catch (Exception e) {
-            log.error("Fallo al enviar correo a {} vía API de Gmail; se registra en modo simulado. Causa: {}",
-                    recipient, e.getMessage(), e);
-            simulate(simulatedType, recipient, subject, simulatedBody);
-        }
+    public void sendCitaReservada(String monitorEmail, String studentName, String subjectName,
+                                  String date, String time) {
+        String body = """
+                <p><strong>%s</strong> reservó una monitoría contigo.</p>
+                <ul>
+                  <li><strong>Asignatura:</strong> %s</li>
+                  <li><strong>Fecha:</strong> %s</li>
+                  <li><strong>Hora:</strong> %s</li>
+                </ul>
+                <p>Ingresa a SiHope para confirmarla o revisarla.</p>
+                """.formatted(studentName, subjectName, date, time);
+        send(monitorEmail, "Nueva cita de monitoría por confirmar", body,
+                "Cita reservada",
+                studentName + " reservó una monitoría de " + subjectName + " el " + date + " a las " + time
+                        + ". Confírmala en SiHope.");
     }
 
-    private MimeMessage buildMime(String recipient, String subject, String htmlBody) throws Exception {
-        MimeMessage mime = new MimeMessage(Session.getInstance(new Properties()));
+    public void sendCitaConfirmada(String studentEmail, String monitorName, String subjectName,
+                                   String date, String time) {
+        String body = """
+                <p>Tu monitoría fue <strong>confirmada</strong> por %s.</p>
+                <ul>
+                  <li><strong>Asignatura:</strong> %s</li>
+                  <li><strong>Fecha:</strong> %s</li>
+                  <li><strong>Hora:</strong> %s</li>
+                </ul>
+                """.formatted(monitorName, subjectName, date, time);
+        send(studentEmail, "Tu cita de monitoría fue confirmada", body,
+                "Cita confirmada",
+                monitorName + " confirmó tu monitoría de " + subjectName + " el " + date + " a las " + time + ".");
+    }
+
+    public void sendCitaCancelada(String recipientEmail, String subjectName, String date, String time,
+                                  String reason) {
+        String extra = (reason == null || reason.isBlank()) ? "" : "<p><strong>Motivo:</strong> " + reason + "</p>";
+        String body = """
+                <p>La monitoría de <strong>%s</strong> del %s a las %s fue <strong>cancelada</strong>.</p>
+                %s
+                <p>El horario queda liberado nuevamente.</p>
+                """.formatted(subjectName, date, time, extra);
+        send(recipientEmail, "Una cita de monitoría fue cancelada", body,
+                "Cita cancelada",
+                "La monitoría de " + subjectName + " del " + date + " a las " + time + " fue cancelada."
+                        + (reason == null || reason.isBlank() ? "" : " Motivo: " + reason));
+    }
+
+    public void sendCitaRecordatorio(String recipientEmail, String subjectName, String date, String time,
+                                     String counterpart) {
+        String body = """
+                <p>Te recordamos tu monitoría próxima:</p>
+                <ul>
+                  <li><strong>Asignatura:</strong> %s</li>
+                  <li><strong>Con:</strong> %s</li>
+                  <li><strong>Fecha:</strong> %s</li>
+                  <li><strong>Hora:</strong> %s</li>
+                </ul>
+                """.formatted(subjectName, counterpart, date, time);
+        send(recipientEmail, "Recordatorio: tienes una monitoría mañana", body,
+                "Recordatorio de cita",
+                "Recordatorio: monitoría de " + subjectName + " con " + counterpart + " el " + date
+                        + " a las " + time + ".");
+    }
+
+    private void send(String recipient, String subject, String htmlBody,
+                      String simulatedType, String simulatedBody) {
+        if (smtpConfigured()) {
+            try {
+                Properties props = new Properties();
+                props.put("mail.smtp.host", mailHost);
+                props.put("mail.smtp.port", String.valueOf(mailPort));
+                props.put("mail.smtp.auth", smtpAuth);
+                props.put("mail.smtp.starttls.enable", starttlsEnabled);
+                props.put("mail.smtp.starttls.required", starttlsRequired);
+                if (!smtpSslTrust.isBlank()) {
+                    props.put("mail.smtp.ssl.trust", smtpSslTrust);
+                }
+
+                Session session = Session.getInstance(props, new Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(mailUsername, mailPassword);
+                    }
+                });
+
+                MimeMessage mime = buildMime(session, recipient, subject, htmlBody);
+                Transport.send(mime);
+                log.info("Correo enviado a {} vía SMTP (asunto: {})", recipient, subject);
+                return;
+            } catch (Exception e) {
+                log.error("Fallo al enviar correo a {} vía SMTP; se intenta con Gmail API. Causa: {}",
+                        recipient, e.getMessage(), e);
+            }
+        }
+
+        Gmail gmail = gmailProvider.getIfAvailable();
+        if (gmail != null) {
+            try {
+                MimeMessage mime = buildMime(Session.getInstance(new Properties()), recipient, subject, htmlBody);
+                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                mime.writeTo(buffer);
+                String raw = Base64.getUrlEncoder().encodeToString(buffer.toByteArray());
+
+                Message message = new Message().setRaw(raw);
+                gmail.users().messages().send("me", message).execute();
+                log.info("Correo enviado a {} vía API de Gmail (asunto: {})", recipient, subject);
+            } catch (Exception e) {
+                log.error("Fallo al enviar correo a {} vía API de Gmail; se registra en modo simulado. Causa: {}",
+                        recipient, e.getMessage(), e);
+                simulate(simulatedType, recipient, subject, simulatedBody);
+            }
+            return;
+        }
+
+        simulate(simulatedType, recipient, subject, simulatedBody);
+    }
+
+    private boolean smtpConfigured() {
+        return !mailHost.isBlank() && !mailUsername.isBlank() && !mailPassword.isBlank();
+    }
+
+    private MimeMessage buildMime(Session session, String recipient, String subject, String htmlBody) throws Exception {
+        MimeMessage mime = new MimeMessage(session);
         if (sender != null && !sender.isBlank()) {
             mime.setFrom(new InternetAddress(sender));
         }

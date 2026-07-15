@@ -72,3 +72,74 @@ INSERT IGNORE INTO rol (nombre) VALUES
     ('COORDINADOR'),
     ('MONITOR'),
     ('ESTUDIANTE');
+
+CREATE TABLE IF NOT EXISTS asignatura (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    codigo VARCHAR(50),
+    nombre VARCHAR(150) NOT NULL,
+    CONSTRAINT uk_asignatura_nombre UNIQUE (nombre)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS monitor_asignatura (
+    monitor_id INT NOT NULL,
+    asignatura_id INT NOT NULL,
+    PRIMARY KEY (monitor_id, asignatura_id),
+    CONSTRAINT fk_ma_monitor FOREIGN KEY (monitor_id) REFERENCES usuario (id),
+    CONSTRAINT fk_ma_asignatura FOREIGN KEY (asignatura_id) REFERENCES asignatura (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS convocatoria_asignatura (
+    convocatoria_id INT NOT NULL,
+    asignatura_id INT NOT NULL,
+    PRIMARY KEY (convocatoria_id, asignatura_id),
+    CONSTRAINT fk_ca_convocatoria FOREIGN KEY (convocatoria_id) REFERENCES convocatoria (id),
+    CONSTRAINT fk_ca_asignatura FOREIGN KEY (asignatura_id) REFERENCES asignatura (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS cita (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    estudiante_id INT NOT NULL,
+    monitor_id INT NOT NULL,
+    asignatura_id INT NOT NULL,
+    fecha DATE NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
+    tema TEXT,
+    estado VARCHAR(20) NOT NULL DEFAULT 'RESERVADA',
+    motivo_cancelacion VARCHAR(255),
+    recordatorio_enviado BOOLEAN NOT NULL DEFAULT FALSE,
+    fecha_creacion DATETIME NOT NULL,
+    slot_key VARCHAR(80),
+    CONSTRAINT fk_cita_estudiante FOREIGN KEY (estudiante_id) REFERENCES usuario (id),
+    CONSTRAINT fk_cita_monitor FOREIGN KEY (monitor_id) REFERENCES usuario (id),
+    CONSTRAINT fk_cita_asignatura FOREIGN KEY (asignatura_id) REFERENCES asignatura (id),
+    CONSTRAINT uk_cita_slot UNIQUE (slot_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS carrera (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    CONSTRAINT uk_carrera_nombre UNIQUE (nombre)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO carrera (nombre) VALUES
+    ('Ingeniería de Sistemas y Computación'),
+    ('Ingeniería Electrónica'),
+    ('Ingeniería Civil'),
+    ('Ingeniería Metalúrgica'),
+    ('Ingeniería de Transporte y Vías'),
+    ('Ingeniería Ambiental'),
+    ('Ingeniería Agronómica'),
+    ('Ingeniería Industrial'),
+    ('Ingeniería Electromecánica'),
+    ('Ingeniería de Minas'),
+    ('Ingeniería Geológica');
+
+-- Agrega usuario.carrera_id de forma idempotente: el bloque CREATE TABLE IF NOT EXISTS
+-- de usuario no se re-ejecuta en bases de datos existentes, por eso se usa un ALTER condicional.
+SET @col_exists := (SELECT COUNT(*) FROM information_schema.columns
+    WHERE table_schema = DATABASE() AND table_name = 'usuario' AND column_name = 'carrera_id');
+SET @ddl := IF(@col_exists = 0,
+    'ALTER TABLE usuario ADD COLUMN carrera_id INT NULL, ADD CONSTRAINT fk_usuario_carrera FOREIGN KEY (carrera_id) REFERENCES carrera (id)',
+    'SELECT 1');
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

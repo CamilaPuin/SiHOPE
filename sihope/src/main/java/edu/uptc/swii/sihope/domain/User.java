@@ -1,14 +1,20 @@
 package edu.uptc.swii.sihope.domain;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -64,6 +70,18 @@ public class User {
     @ManyToOne
     @JoinColumn(name = "rol_id")
     private Role role;
+
+    @ManyToOne
+    @JoinColumn(name = "carrera_id")
+    @JsonIgnore
+    private Carrera career;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "monitor_asignatura",
+            joinColumns = @JoinColumn(name = "monitor_id"),
+            inverseJoinColumns = @JoinColumn(name = "asignatura_id"))
+    @JsonIgnore
+    private Set<Asignatura> subjects = new LinkedHashSet<>();
 
     public User() {
     }
@@ -172,7 +190,39 @@ public class User {
         this.role = role;
     }
 
-    // Spanish aliases for backward compatibility
+    public Carrera getCareer() {
+        return career;
+    }
+
+    public void setCareer(Carrera career) {
+        this.career = career;
+    }
+
+    @JsonIgnore
+    public Carrera getCarrera() {
+        return getCareer();
+    }
+
+    public void setCarrera(Carrera carrera) {
+        setCareer(carrera);
+    }
+
+    public Set<Asignatura> getSubjects() {
+        return subjects;
+    }
+
+    public void setSubjects(Set<Asignatura> subjects) {
+        this.subjects = subjects;
+    }
+
+    public Set<Asignatura> getAsignaturas() {
+        return getSubjects();
+    }
+
+    public void setAsignaturas(Set<Asignatura> asignaturas) {
+        setSubjects(asignaturas);
+    }
+
     public String getNombres() {
         return getFirstName();
     }

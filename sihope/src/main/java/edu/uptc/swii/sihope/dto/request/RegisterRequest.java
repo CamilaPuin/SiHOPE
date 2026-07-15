@@ -22,6 +22,9 @@ public class RegisterRequest {
     @JsonProperty("password2")
     private String password2;
 
+    @JsonProperty("carreraId")
+    private Integer careerId;
+
     public RegisterRequest() {
     }
 
@@ -71,6 +74,14 @@ public class RegisterRequest {
 
     public void setPassword2(String password2) {
         this.password2 = password2;
+    }
+
+    public Integer getCareerId() {
+        return careerId;
+    }
+
+    public void setCareerId(Integer careerId) {
+        this.careerId = careerId;
     }
 
 }

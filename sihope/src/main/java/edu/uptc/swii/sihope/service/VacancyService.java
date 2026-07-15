@@ -4,16 +4,22 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import edu.uptc.swii.sihope.domain.Asignatura;
 import edu.uptc.swii.sihope.domain.Vacancy;
 import edu.uptc.swii.sihope.domain.User;
 import edu.uptc.swii.sihope.dto.request.CreateVacancyRequest;
 import edu.uptc.swii.sihope.dto.response.VacancyResponse;
+import edu.uptc.swii.sihope.repository.AsignaturaRepository;
 import edu.uptc.swii.sihope.repository.VacancyRepository;
 import edu.uptc.swii.sihope.repository.UserRepository;
 
@@ -22,19 +28,37 @@ public class VacancyService {
 
     private final VacancyRepository vacancyRepository;
     private final UserRepository userRepository;
+    private final AsignaturaRepository asignaturaRepository;
 
     public VacancyService(VacancyRepository vacancyRepository,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          AsignaturaRepository asignaturaRepository) {
         this.vacancyRepository = vacancyRepository;
         this.userRepository = userRepository;
+        this.asignaturaRepository = asignaturaRepository;
     }
 
+    @Transactional
     public Map<String, String> create(Integer coordinatorId, CreateVacancyRequest req) {
         Map<String, String> errors = new LinkedHashMap<>();
 
         if (isBlank(req.getTitle()))     errors.put("titulo", "El título es obligatorio.");
-        if (isBlank(req.getSubject()))    errors.put("materia", "La materia es obligatoria.");
         if (isBlank(req.getRequirements())) errors.put("requisitos", "Los requisitos son obligatorios.");
+
+        Set<Asignatura> subjects = new LinkedHashSet<>();
+        if (req.getSubjectIds() == null || req.getSubjectIds().isEmpty()) {
+            errors.put("materiaIds", "Selecciona al menos una materia del catálogo.");
+        } else {
+            for (Integer id : req.getSubjectIds()) {
+                Asignatura asignatura = (id == null) ? null
+                        : asignaturaRepository.findById(id).orElse(null);
+                if (asignatura == null) {
+                    errors.put("materiaIds", "Alguna de las materias seleccionadas no existe en el catálogo.");
+                    break;
+                }
+                subjects.add(asignatura);
+            }
+        }
 
         if (req.getSlots() == null || req.getSlots() < 1) {
             errors.put("plazas", "Las plazas deben ser un número mayor o igual a 1.");
@@ -64,7 +88,9 @@ public class VacancyService {
         vacancy.setTitle(req.getTitle().trim());
         vacancy.setDescription(req.getDescription());
         vacancy.setRequirements(req.getRequirements().trim());
-        vacancy.setSubject(req.getSubject().trim());
+        vacancy.setSubjects(subjects);
+        vacancy.setSubject(subjects.stream().map(Asignatura::getName)
+                .collect(Collectors.joining(", ")));
         vacancy.setSlots(req.getSlots());
         vacancy.setDeadline(deadline);
         vacancy.setStatus(Vacancy.ABIERTA);
@@ -75,11 +101,13 @@ public class VacancyService {
         return errors;
     }
 
+    @Transactional(readOnly = true)
     public List<VacancyResponse> listAll() {
         return vacancyRepository.findAllByOrderByCreatedAtDesc()
                 .stream().map(VacancyResponse::from).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<VacancyResponse> listOpen() {
         return vacancyRepository
                 .findByStatusAndDeadlineGreaterThanEqualOrderByDeadlineAsc(

@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>edu.uptc.swii</groupId>
-	<artifactId>libraryapp</artifactId>
+	<artifactId>sihopeapp</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>libraryapp</name>
+	<name>sihopeapp</name>
 	<description/>
 	<url/>
 	<licenses>
@@ -88,6 +88,11 @@
 			<version>3.0.3</version>
 		</dependency>
 
+		<!-- Envío de correo real vía SMTP/JavaMail (correo institucional o proveedor). -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
 		<!-- Envío de correo vía API de Gmail (users.messages.send). -->
 		<dependency>
 			<groupId>com.google.apis</groupId>
@@ -104,6 +109,19 @@
 		<dependency>
 			<groupId>org.eclipse.angus</groupId>
 			<artifactId>angus-mail</artifactId>
+			<version>2.0.3</version>
+		</dependency>
+
+		<!-- Exportación de reportes (HU_007): Apache POI para Excel (.xlsx). -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>5.3.0</version>
+		</dependency>
+		<!-- OpenPDF (LGPL/MPL) para generar los reportes en PDF. -->
+		<dependency>
+			<groupId>com.github.librepdf</groupId>
+			<artifactId>openpdf</artifactId>
 			<version>2.0.3</version>
 		</dependency>
 
