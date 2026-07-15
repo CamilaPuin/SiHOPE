@@ -46,7 +46,7 @@ export default function MyAppointments() {
         const up = [];
         const hist = [];
         for (const c of citas) (isUpcoming(c) ? up : hist).push(c);
-        up.reverse(); // más próximas primero
+        up.reverse();
         return { upcoming: up, history: hist };
     }, [citas]);
 

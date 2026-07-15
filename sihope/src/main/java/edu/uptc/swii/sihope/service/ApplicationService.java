@@ -81,7 +81,6 @@ public class ApplicationService {
                 .stream().map(this::toResponse).toList();
     }
 
-    /** Postulaciones del aspirante autenticado (para resaltar sus convocatorias). */
     public List<ApplicationResponse> listByApplicant(Integer applicantId) {
         return applicationRepository.findByApplicantId(applicantId)
                 .stream().map(this::toResponse).toList();
@@ -104,12 +103,10 @@ public class ApplicationService {
         return true;
     }
 
-    /** Plazas de la convocatoria ya ocupadas por aspirantes promovidos a monitor. */
     public long countAssignedMonitors(Integer vacancyId) {
         return applicationRepository.countByVacancyIdAndState(vacancyId, Application.MONITOR_ASIGNADO);
     }
 
-    /** Marca la postulación como ganadora: su aspirante ocupa una plaza de la convocatoria. */
     public void markMonitorAssigned(Application application) {
         application.setState(Application.MONITOR_ASIGNADO);
         applicationRepository.save(application);

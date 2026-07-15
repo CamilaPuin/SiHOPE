@@ -88,24 +88,12 @@
 			<version>3.0.3</version>
 		</dependency>
 
-		<!-- Envío de correo real vía SMTP/JavaMail (correo institucional o proveedor). -->
+		<!-- Envío de correo real vía SMTP/JavaMail (Gmail SMTP). -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
-		<!-- Envío de correo vía API de Gmail (users.messages.send). -->
-		<dependency>
-			<groupId>com.google.apis</groupId>
-			<artifactId>google-api-services-gmail</artifactId>
-			<version>v1-rev20240520-2.0.0</version>
-		</dependency>
-		<!-- Credenciales OAuth2: renueva el access token a partir del refresh token. -->
-		<dependency>
-			<groupId>com.google.auth</groupId>
-			<artifactId>google-auth-library-oauth2-http</artifactId>
-			<version>1.30.1</version>
-		</dependency>
-		<!-- Jakarta Mail (Angus): construye el mensaje MIME que exige la API de Gmail. -->
+		<!-- Jakarta Mail (Angus): implementación SMTP que construye el mensaje MIME. -->
 		<dependency>
 			<groupId>org.eclipse.angus</groupId>
 			<artifactId>angus-mail</artifactId>

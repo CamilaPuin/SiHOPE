@@ -8,6 +8,7 @@ target/
 .env
 *.env
 !.env.example
+secrets-local.properties
 
 ### STS ###
 .apt_generated
@@ -36,8 +37,4 @@ build/
 
 ### VS Code ###
 .vscode/
-<<<<<<< HEAD
 .claude/
-=======
-.claude/
->>>>>>> 0f59144a0e462c64adc5ec5789a4bb24232f7b97

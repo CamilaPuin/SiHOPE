@@ -15,7 +15,6 @@ public class CreateVacancyRequest {
     @JsonProperty("requisitos")
     private String requirements;
 
-    /** IDs de asignaturas del catálogo que orientará el monitor ganador. */
     @JsonProperty("materiaIds")
     private List<Integer> subjectIds;
 

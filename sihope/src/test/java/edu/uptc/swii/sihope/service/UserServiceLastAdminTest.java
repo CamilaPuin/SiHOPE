@@ -57,8 +57,6 @@ class UserServiceLastAdminTest {
         return u;
     }
 
-    // ---------- changeRole ----------
-
     @Test
     void soleAdminCannotChangeOwnRole() {
         when(userRepository.findById(1)).thenReturn(Optional.of(admin(1)));
@@ -82,7 +80,6 @@ class UserServiceLastAdminTest {
 
     @Test
     void adminCanChangeAnotherAdminsRole() {
-        // El actor (id 2) cambia el rol del admin id 1: la regla solo aplica al propio rol.
         when(userRepository.findById(1)).thenReturn(Optional.of(admin(1)));
         when(roleRepository.findByName("COORDINADOR")).thenReturn(new Role("COORDINADOR"));
 
@@ -111,8 +108,6 @@ class UserServiceLastAdminTest {
         when(userRepository.findById(99)).thenReturn(Optional.empty());
         assertEquals(RoleChangeResult.NOT_FOUND, service.changeRole(99, "MONITOR", 1));
     }
-
-    // ---------- changeStatus ----------
 
     @Test
     void cannotDeactivateSoleActiveAdmin() {

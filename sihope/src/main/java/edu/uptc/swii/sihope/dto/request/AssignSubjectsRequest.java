@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/** Asignación de asignaturas del catálogo a un monitor (tarea del coordinador). */
 public class AssignSubjectsRequest {
 
     @JsonProperty("asignaturaIds")

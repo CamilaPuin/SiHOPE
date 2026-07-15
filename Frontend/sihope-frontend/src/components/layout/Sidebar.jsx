@@ -4,13 +4,17 @@ import { useAuth } from "../../hooks/useAuth";
 import { panelByRole } from "../../utils/roles";
 import logo from "../../images/logo-sihope.jpeg";
 
-export default function Sidebar() {
+export default function Sidebar({ onNavigate }) {
     const { user, signOut } = useAuth();
     const role = user?.rol ?? "";
     const isAdmin = role === "ADMINISTRADOR";
 
     const linkClass = ({ isActive }) =>
         `nav__link ${isActive ? "is-active" : ""}`.trim();
+
+    const handleNavClick = () => {
+        if (onNavigate) onNavigate();
+    };
 
     return (
         <aside className="sidebar">
@@ -20,20 +24,20 @@ export default function Sidebar() {
 
             <nav className="nav">
                 {!isAdmin && (
-                    <NavLink to={panelByRole(role)} className={linkClass} end>
+                    <NavLink to={panelByRole(role)} className={linkClass} end onClick={handleNavClick}>
                         <span className="nav__icon">◧</span> Panel principal
                     </NavLink>
                 )}
 
                 {isAdmin && (
                     <>
-                        <NavLink to="/admin/usuarios" className={linkClass}>
+                        <NavLink to="/admin/usuarios" className={linkClass} onClick={handleNavClick}>
                             <span className="nav__icon">◈</span> Usuarios y roles
                         </NavLink>
-                        <NavLink to="/admin/asignaturas" className={linkClass}>
+                        <NavLink to="/admin/asignaturas" className={linkClass} onClick={handleNavClick}>
                             <span className="nav__icon">◨</span> Asignaturas
                         </NavLink>
-                        <NavLink to="/admin/carreras" className={linkClass}>
+                        <NavLink to="/admin/carreras" className={linkClass} onClick={handleNavClick}>
                             <span className="nav__icon">◫</span> Carreras
                         </NavLink>
                     </>
@@ -41,10 +45,10 @@ export default function Sidebar() {
 
                 {role === "MONITOR" && (
                     <>
-                        <NavLink to="/monitor/disponibilidad" className={linkClass}>
+                        <NavLink to="/monitor/disponibilidad" className={linkClass} onClick={handleNavClick}>
                             <span className="nav__icon">◷</span> Mi disponibilidad
                         </NavLink>
-                        <NavLink to="/citas" className={linkClass}>
+                        <NavLink to="/citas" className={linkClass} onClick={handleNavClick}>
                             <span className="nav__icon">◔</span> Mis citas
                         </NavLink>
                     </>
@@ -52,33 +56,33 @@ export default function Sidebar() {
 
                 {role === "COORDINADOR" && (
                     <>
-                        <NavLink to="/coordinador/convocatorias" className={linkClass}>
+                        <NavLink to="/coordinador/convocatorias" className={linkClass} onClick={handleNavClick}>
                             <span className="nav__icon">◱</span> Convocatorias
                         </NavLink>
-                        <NavLink to="/coordinador/monitores" className={linkClass}>
+                        <NavLink to="/coordinador/monitores" className={linkClass} onClick={handleNavClick}>
                             <span className="nav__icon">◨</span> Asignación de materias
                         </NavLink>
-                        <NavLink to="/coordinador/reportes" className={linkClass}>
+                        <NavLink to="/coordinador/reportes" className={linkClass} onClick={handleNavClick}>
                             <span className="nav__icon">◰</span> Reportes
                         </NavLink>
                     </>
                 )}
                 {role === "ESTUDIANTE" && (
                     <>
-                        <NavLink to="/convocatorias" className={linkClass}>
+                        <NavLink to="/convocatorias" className={linkClass} onClick={handleNavClick}>
                             <span className="nav__icon">◱</span> Convocatorias
                         </NavLink>
-                        <NavLink to="/citas" className={linkClass}>
+                        <NavLink to="/citas" className={linkClass} onClick={handleNavClick}>
                             <span className="nav__icon">◔</span> Mis citas
                         </NavLink>
                     </>
                 )}
 
-                <NavLink to="/monitores" className={linkClass}>
+                <NavLink to="/monitores" className={linkClass} onClick={handleNavClick}>
                     <span className="nav__icon">◎</span> Monitores
                 </NavLink>
 
-                <NavLink to="/credenciales" className={linkClass}>
+                <NavLink to="/credenciales" className={linkClass} onClick={handleNavClick}>
                     <span className="nav__icon">⚿</span> Mis credenciales
                 </NavLink>
             </nav>

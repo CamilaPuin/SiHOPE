@@ -29,7 +29,6 @@ export default function BookAppointment() {
     const [booking, setBooking] = useState(false);
     const [error, setError] = useState("");
 
-    // catálogo de asignaturas del monitor -> se necesita el id; lo tomamos del catálogo global
     const [catalog, setCatalog] = useState([]);
 
     useEffect(() => {
@@ -52,7 +51,6 @@ export default function BookAppointment() {
         };
     }, [monitorId]);
 
-    // asignaturas del monitor emparejadas con su id del catálogo
     const monitorSubjects = useMemo(() => {
         const names = monitor?.asignaturas ?? [];
         return names
@@ -109,7 +107,6 @@ export default function BookAppointment() {
             });
             navigate("/citas");
         } catch (err) {
-            // 409 => el horario dejó de estar disponible: refrescamos la lista
             if (err.status === 409) {
                 loadSlots(date);
             }

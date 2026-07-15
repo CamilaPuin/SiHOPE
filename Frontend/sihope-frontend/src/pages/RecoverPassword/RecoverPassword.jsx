@@ -18,7 +18,7 @@ export default function RecoverPassword() {
         e.preventDefault();
         setError("");
         if (!UPTC_EMAIL.test(email.trim())) {
-            setError("Debes usar un correo institucional de la UPTC (@uptc.edu.co).");
+            setError("Ingresa un correo electrónico válido.");
             return;
         }
         setSubmitting(true);

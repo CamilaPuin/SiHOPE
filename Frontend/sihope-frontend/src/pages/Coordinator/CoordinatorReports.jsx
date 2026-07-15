@@ -6,8 +6,6 @@ import { citasReport, downloadReport } from "../../services/reportService";
 import { listMonitors } from "../../services/availabilityService";
 import logo from "../../images/logo-sihope-fondoblanco.jpg";
 
-// Formatea una fecha local como yyyy-MM-dd SIN pasar por UTC (toISOString convierte a UTC
-// y en zonas con offset negativo, como Colombia UTC-5, puede devolver el día anterior).
 const toLocalISO = (d) => {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -32,9 +30,6 @@ export default function CoordinatorReports() {
     const [monitorId, setMonitorId] = useState("");
     const [monitors, setMonitors] = useState([]);
     const [report, setReport] = useState(null);
-    // Parámetros con los que se generó el reporte actualmente mostrado. Se "congelan" al
-    // generar para que el encabezado y las descargas usen SIEMPRE el periodo consultado,
-    // aunque el usuario cambie los inputs después.
     const [applied, setApplied] = useState(null);
     const [loading, setLoading] = useState(false);
     const [downloading, setDownloading] = useState("");
@@ -57,7 +52,6 @@ export default function CoordinatorReports() {
             const monitor = monitorId || undefined;
             const res = await citasReport(desde, hasta, monitor);
             setReport(res.data);
-            // Congelamos el periodo/monitor efectivamente consultados.
             setApplied({ desde, hasta, monitorId });
         } catch (err) {
             setError(err.message);
@@ -181,7 +175,7 @@ export default function CoordinatorReports() {
                             <div className="stat__accent" />
                         </div>
                         <div className="stat">
-                            <div className="stat__label">Temas atendidos</div>
+                            <div className="stat__label">Asignaturas atendidas</div>
                             <div className="stat__value">{report.porTema.length}</div>
                             <div className="stat__accent" />
                         </div>
@@ -203,7 +197,7 @@ export default function CoordinatorReports() {
                                 </div>
                             </div>
                             <div className="card">
-                                <div className="card__title">Por tema</div>
+                                <div className="card__title">Por asignatura</div>
                                 <div className="schedule mt-16">
                                     {report.porTema.map((r) => (
                                         <div key={r.nombre} className="schedule__row">

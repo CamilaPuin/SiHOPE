@@ -8,14 +8,6 @@ export const citasReport = (desde, hasta, monitorId) =>
         })
         .then((r) => r.data);
 
-/**
- * Descarga el reporte exportado (pdf|excel). Usa fetch directo porque necesitamos el binario
- * como Blob y disparar la descarga en el navegador.
- *
- * Si el backend responde con error (401/403/400/500) el cuerpo llega como JSON
- * ({success, message, data}); en ese caso NO lo tratamos como archivo: leemos el
- * mensaje real y lo lanzamos para que la UI lo muestre.
- */
 export async function downloadReport(desde, hasta, formato, monitorId) {
     const base = import.meta.env.VITE_API_URL ?? "";
     const params = new URLSearchParams({ desde, hasta, formato });
@@ -44,8 +36,6 @@ export async function downloadReport(desde, hasta, formato, monitorId) {
 
     const blob = await res.blob();
 
-    // Defensa extra: si el servidor respondió 200 pero devolvió JSON en vez del binario,
-    // no descargamos un archivo corrupto: mostramos el mensaje.
     const type = blob.type || "";
     if (type.includes("application/json")) {
         const text = await blob.text();

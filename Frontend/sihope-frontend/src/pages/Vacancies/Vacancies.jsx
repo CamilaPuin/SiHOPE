@@ -130,7 +130,6 @@ export default function Vacancies() {
         };
     }, []);
 
-    // Estado de mi postulación por convocatoria (para resaltar las tarjetas).
     const applicationByVacancy = useMemo(() => {
         const map = new Map();
         applications.forEach((a) => map.set(a.convocatoriaId, a.estado));

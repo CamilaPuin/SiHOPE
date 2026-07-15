@@ -26,9 +26,6 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         createIfMissing("Admin", "SiHope", "ADM-0001", "admin@uptc.edu.co", "Admin2026*", "ADMINISTRADOR");
-        createIfMissing("Coordinador", "SiHope", "COORD-0001", "coordinador@uptc.edu.co", "Coord2026*", "COORDINADOR");
-        createIfMissing("Monitor", "SiHope", "MON-0001", "monitor@uptc.edu.co", "Monitor2026*", "MONITOR");
-        createIfMissing("Estudiante", "SiHope", "202312345", "estudiante@uptc.edu.co", "Estudiante2026*", "ESTUDIANTE");
     }
 
     private void createIfMissing(String firstName, String lastName, String studentCode,

@@ -68,7 +68,6 @@ public class ReportService {
         List<ReportRow> subjectRows = bySubject.entrySet().stream()
                 .map(e -> new ReportRow(e.getKey(), e.getValue())).toList();
 
-        // El listado detallado de citas solo se incluye cuando se filtra por un monitor.
         List<CitaDetailRow> details = monitorId == null
                 ? null
                 : citas.stream().map(this::detailRow).toList();

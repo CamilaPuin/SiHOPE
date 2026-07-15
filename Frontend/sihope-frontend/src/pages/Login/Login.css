@@ -40,7 +40,6 @@
     max-width: 100%;
     margin-right: 8px;
 }
-/* keep mobile rule */
 @media (max-width: 760px) {
     .login-brand__logo .iso { width: 200px; }
 }
