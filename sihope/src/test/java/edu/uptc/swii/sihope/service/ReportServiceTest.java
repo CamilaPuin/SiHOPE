@@ -70,7 +70,6 @@ class ReportServiceTest {
 
         CitasReportResponse report = reportService.citasAtendidas(FROM, TO);
 
-        // El periodo solicitado se traslada tal cual al repositorio y a la respuesta.
         verify(citaRepository).findByStatusAndDateBetweenOrderByDateAscStartTimeAsc(
                 Cita.ATENDIDA, FROM, TO);
         assertEquals("2026-03-01", report.from());
@@ -97,7 +96,6 @@ class ReportServiceTest {
         assertEquals(3, report.total());
         assertEquals(2, report.byMonitor().size());
         assertEquals(2, report.bySubject().size());
-        // Sin filtro por monitor no se incluye el detalle de citas.
         assertNull(report.details());
         assertNull(report.message());
     }
@@ -115,7 +113,6 @@ class ReportServiceTest {
 
         CitasReportResponse report = reportService.citasAtendidas(FROM, TO, 1);
 
-        // Con filtro por monitor se usa la consulta específica y se incluye el detalle.
         verify(citaRepository).findByStatusAndMonitorIdAndDateBetweenOrderByDateAscStartTimeAsc(
                 Cita.ATENDIDA, 1, FROM, TO);
         assertEquals(1, report.total());

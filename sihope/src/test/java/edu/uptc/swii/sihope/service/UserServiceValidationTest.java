@@ -51,8 +51,6 @@ class UserServiceValidationTest {
         MockitoAnnotations.openMocks(this);
     }
 
-    // ---------- createUser: nombre ----------
-
     @Test
     void rejectsNameWithDigits() {
         Map<String, String> errors = service.createUser(
@@ -85,8 +83,6 @@ class UserServiceValidationTest {
         verify(userRepository).save(any(User.class));
     }
 
-    // ---------- createUser: documento/código ----------
-
     @Test
     void rejectsCodeWithHyphen() {
         Map<String, String> errors = service.createUser(
@@ -116,8 +112,6 @@ class UserServiceValidationTest {
         assertFalse(errors.containsKey("documento"));
         assertTrue(errors.isEmpty());
     }
-
-    // ---------- createUser: carrera para ESTUDIANTE ----------
 
     @Test
     void requiresCareerForStudent() {
@@ -160,8 +154,6 @@ class UserServiceValidationTest {
         assertFalse(errors.containsKey("carrera"));
         assertTrue(errors.isEmpty());
     }
-
-    // ---------- registerStudent ----------
 
     private UserDTO validDto() {
         UserDTO dto = new UserDTO();

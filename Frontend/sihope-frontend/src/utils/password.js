@@ -14,4 +14,4 @@ export function isPasswordValid(value) {
     return PASSWORD_RULES.every((r) => r.test(value));
 }
 
-export const UPTC_EMAIL = /@uptc\.edu\.co$/i;
+export const UPTC_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

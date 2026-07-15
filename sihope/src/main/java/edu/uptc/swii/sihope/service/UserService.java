@@ -34,10 +34,10 @@ public class UserService {
             List.of("ADMINISTRADOR", "COORDINADOR", "MONITOR", "ESTUDIANTE");
     private static final int RESET_VALIDITY_MIN = 30;
     private static final int NAME_MAX = 50;
-    // Solo letras (incluye tildes/ñ/ü) separadas por espacios simples
     private static final Pattern NAME_PATTERN = Pattern.compile("^\\p{L}+(?:\\s\\p{L}+)*$");
-    // Alfanumérico sin espacios ni caracteres especiales, máx. 15
     private static final Pattern CODE_PATTERN = Pattern.compile("^[A-Za-z0-9]{1,15}$");
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -100,8 +100,7 @@ public class UserService {
     }
 
     private boolean isInstitutionalEmail(String correo) {
-        return correo != null && correo.trim().toLowerCase().endsWith(UPTC_DOMAIN)
-                && correo.trim().length() > UPTC_DOMAIN.length();
+        return correo != null && EMAIL_PATTERN.matcher(correo.trim()).matches();
     }
 
     private boolean isValidName(String s) {
@@ -113,9 +112,6 @@ public class UserService {
         return s != null && CODE_PATTERN.matcher(s.trim()).matches();
     }
 
-    // Normaliza un nombre completo para comparar: sin tildes/diacríticos, minúsculas,
-    // espacios colapsados. Así "Juan Manuel Ojeda Sanchez" y "Juán  Manuel Ojeda Sánchez"
-    // se consideran el mismo nombre, sin importar cómo se dividan en nombres/apellidos.
     private String normalizeName(String s) {
         if (s == null) {
             return "";
@@ -171,7 +167,7 @@ public class UserService {
         }
 
         if (!isInstitutionalEmail(dto.getEmail())) {
-            errors.put("correo", "Debes usar un correo institucional de la UPTC (" + UPTC_DOMAIN + ").");
+            errors.put("correo", "Ingresa un correo electrónico válido.");
         } else if (userRepository.existsByEmail(dto.getEmail().trim())) {
             errors.put("correo", "Este correo ya tiene una cuenta registrada.");
         }
@@ -253,7 +249,7 @@ public class UserService {
         }
 
         if (!isInstitutionalEmail(email)) {
-            errors.put("correo", "Ingresa un correo institucional válido (" + UPTC_DOMAIN + ").");
+            errors.put("correo", "Ingresa un correo electrónico válido.");
         } else if (userRepository.existsByEmail(email.trim())) {
             errors.put("correo", "Ya existe un usuario con ese correo.");
         }

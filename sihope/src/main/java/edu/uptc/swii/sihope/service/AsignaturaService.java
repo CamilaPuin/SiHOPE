@@ -121,10 +121,6 @@ public class AsignaturaService {
         return errors;
     }
 
-    /**
-     * Al promover al ganador de una convocatoria, se le asignan las materias que
-     * el coordinador registró en esa convocatoria.
-     */
     @Transactional
     public void assignVacancySubjects(Integer monitorId, Vacancy vacancy) {
         if (vacancy == null || vacancy.getId() == null) {

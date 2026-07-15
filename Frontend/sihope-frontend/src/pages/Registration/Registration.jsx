@@ -19,9 +19,7 @@ const INITIAL = {
     password2: ""
 };
 
-// Solo letras (incluye tildes/ñ/ü) separadas por espacios simples, máx. 50
 const NAME_PATTERN = /^\p{L}+(?:\s\p{L}+)*$/u;
-// Alfanumérico sin espacios ni caracteres especiales, máx. 15
 const CODE_PATTERN = /^[A-Za-z0-9]{1,15}$/;
 
 export default function Registration() {
@@ -56,7 +54,7 @@ export default function Registration() {
         else if (!CODE_PATTERN.test(codigo))
             errs.codigo = "El código debe ser alfanumérico, sin espacios ni caracteres especiales (máx. 15 caracteres).";
         if (!UPTC_EMAIL.test(form.correo.trim()))
-            errs.correo = "Debes usar un correo institucional de la UPTC (@uptc.edu.co).";
+            errs.correo = "Ingresa un correo electrónico válido.";
         if (!form.carreraId) errs.carrera = "Selecciona tu carrera.";
         if (!isPasswordValid(form.password))
             errs.password = "La contraseña no cumple los requisitos de seguridad.";
